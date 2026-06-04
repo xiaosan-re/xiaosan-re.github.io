@@ -22,6 +22,12 @@ permalink: /about/
 {% endfor %}
 </ul>
 
+## 公众号
+
+欢迎关注我的微信公众号「矛和盾的故事」：
+
+<img style="height:192px;width:192px;border:1px solid lightgrey;" src="{{ site.url }}/assets/images/qrcode.jpg" alt="矛和盾的故事" />
+
 ## Skill Keywords
 
 {% for skill in site.data.skills %}
