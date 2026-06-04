@@ -2,18 +2,18 @@
 #   Main Configs   #
 # ---------------- #
 baseurl:
-url: https://mazhuang.org
+url: https://xiaosan-re.github.io
 date_format: "ordinal"
-title: 码志
-subtitle: "公众号：闷骚的程序员"
-description: "马壮的个人博客，公众号：闷骚的程序员"
-keywords: 码志, Zhuang Ma, mzlogin, mazhuang, 闷骚的程序员
+title: 小三的逆向笔记
+subtitle: "Android native 脱壳 · 反混淆 · Frida 实战"
+description: "小三的个人博客，记录 Android native so 脱壳、反混淆与 Frida/IDA 逆向实战。"
+keywords: 小三, xiaosan-re, Android逆向, Frida, IDA, 脱壳, 反混淆, so
 timezone: Asia/Shanghai
 encoding: "utf-8"
 # 页面左下角显示的年份
-since: 2015
+since: 2026
 # 源码仓库，请替换成自己的
-repository: mzlogin/mzlogin.github.io
+repository: xiaosan-re/xiaosan-re.github.io
 # 对 css 和 js 资源的 cdn 加速配置
 cdn:
     jsdelivr:
@@ -39,8 +39,8 @@ components:
     # 页面右上角，以及「关于」页面的二维码
     # 修改图片请替换 assets/images/qrcode.jpg
     qrcode:
-        enabled: true
-        image_alt: 闷骚的程序员
+        enabled: false
+        image_alt: 小三
     # 维基索引页使用哪种视图，支持 列表（list）/分类（cate）
     wiki:
         view: cate
@@ -57,12 +57,12 @@ highlight_theme: github
 # ---------------- #
 #      Author      #
 # ---------------- #
-author: Zhuang Ma
-organization: 
-organization_url: 
-github_username: mzlogin
-location: Wuhan, China
-email: chumpma@gmail.com
+author: 小三
+organization:
+organization_url:
+github_username: xiaosan-re
+location: China
+email:
 
 # ---------------- #
 #    Navigation    #
@@ -79,24 +79,6 @@ navs:
   -
     href: /archives/
     label: 归档
-    mobile-hidden: true
-
-  -
-    href: /open-source/
-    label: 开源
-    mobile-hidden: true
-
-  -
-    href: /fragments/
-    label: 片段
-
-  -
-    href: /wiki/
-    label: 维基
-
-  -
-    href: /links/
-    label: 链接
     mobile-hidden: true
 
   -
@@ -157,7 +139,8 @@ collections:
 #      Comments    #
 # ---------------- #
 # support provider: disqus, gitment, gitalk, utterances, beaudar, giscus
-comments_provider: giscus
+# 暂不开启评论，需要时再填上面任一 provider 并配置对应信息
+comments_provider:
 # !!!重要!!! 请修改下面这些信息为你自己申请的
 # !!!Important!!! Please modify infos below to yours
 # disqus 配置参考：https://disqus.com

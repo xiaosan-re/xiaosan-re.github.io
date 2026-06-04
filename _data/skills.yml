@@ -1,19 +1,20 @@
-- name: Software Engineer Keywords
+- name: 逆向 / 安全
   keywords:
-      - Java
-      - C++
+      - Android Reverse
+      - Native so 脱壳
+      - 反混淆 / OLLVM
+      - Anti-Debug
+
+- name: 工具链
+  keywords:
+      - Frida
+      - IDA Pro
+      - capstone
+      - unidbg
+
+- name: 编程
+  keywords:
+      - C / C++
       - Python
-      - Design Patterns
-
-- name: Mobile Developer Keywords
-  keywords:
-      - Android
-      - Reverse Engineering
-
-- name: Windows Developer Keywords
-  keywords:
-      - Win32 SDK
-      - DuiLib
-      - WTL
-      - COM
-      - WinDbg
+      - ARM / smali
+      - JNI
