@@ -9,3 +9,7 @@ Gemfile.lock
 .jekyll-metadata
 .\$*.png.bkp
 .\$*.png.dtmp
+
+# local bundler
+vendor/
+.bundle/

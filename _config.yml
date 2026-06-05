@@ -51,7 +51,7 @@ components:
 compress_html:
   clippings: all
   comments: ["<!--", "-->"]
-# 代码高亮风格，支持的 theme 列表见 https://github.com/mzlogin/rouge-themes
+# 代码高亮风格
 highlight_theme: github
 
 # ---------------- #
@@ -189,7 +189,7 @@ simple_jekyll_search:
 google:
     analytics_id: # G-20FLEG5Q2W
     adsense:
-        enabled: true
+        enabled: false
         footer: true
         sidebar: true
         sidebar-detail: true
