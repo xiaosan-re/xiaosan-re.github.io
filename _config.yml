@@ -5,8 +5,8 @@ baseurl:
 url: https://xiaosan-re.github.io
 date_format: "ordinal"
 title: 我是小三
-subtitle: "Android native 脱壳 · 反混淆 · Frida 实战"
-description: "小三的个人博客，记录 Android native so 脱壳、反混淆与 Frida/IDA 逆向实战。"
+subtitle: "移动端逆向"
+description: "我是小三的个人博客，记录 逆向相关。"
 keywords: 小三, xiaosan-re, Android逆向, Frida, IDA, 脱壳, 反混淆, so
 timezone: Asia/Shanghai
 encoding: "utf-8"
