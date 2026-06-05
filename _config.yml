@@ -5,7 +5,7 @@ baseurl:
 url: https://xiaosan-re.github.io
 date_format: "ordinal"
 title: 我是小三
-subtitle: "移动端逆向"
+subtitle: "移动端逆向    ------------------------> 关注公众号"
 description: "我是小三的个人博客，记录 逆向相关。"
 keywords: 小三, xiaosan-re, Android逆向, Frida, IDA, 脱壳, 反混淆, so
 timezone: Asia/Shanghai
@@ -57,7 +57,7 @@ highlight_theme: github
 # ---------------- #
 #      Author      #
 # ---------------- #
-author: 小三
+author: 我是小三
 organization:
 organization_url:
 github_username: xiaosan-re
