@@ -5561,7 +5561,7 @@ DeviceIdentityIssueClientCertificateWithCompletion 则负责根据这些参数�
 
 组合参数
 
-```Objective-C
+```
 _SecCertificateCopyData
 id __fastcall __66__DCCertificateGenerator__generateCertificateChainWithCompletion___block_invoke(
         __int64 a1,
@@ -5985,7 +5985,7 @@ LABEL_36:
 
 - 搜索“Encrypting data...”定位关键加密算法。
 
-```Objective-C
+```
 id __fastcall -[DCCertificateGenerator _encryptData:serverSyncedDate:error:](id *a1, __int64 a2, void *a3, void *a4)
 {
   id v6; // x21
