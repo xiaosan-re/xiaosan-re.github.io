@@ -10,7 +10,7 @@ permalink: /about/
 
 我是小三，一名逆向工程师。
 
-主要方向：移动端闻向、脱壳、反混淆，常用 Frida、IDA、capstone。
+主要方向：移动端逆向、脱壳、反混淆，常用 Frida、IDA、capstone。
 
 这个博客用来记录逆向实战中的笔记与踩坑。
 
