@@ -41,7 +41,7 @@ components:
     #          → Grow → Subscription form，复制 <form action="..."> 里的地址
     subscribe:
         enabled: true
-        follow_it_action: ""
+        follow_it_action: "https://api.follow.it/subscription-form/QXFwelI3aC9Va25EMVNHY3h4cjFQRFBxRkx4WDJzV01vQ2RORytqNUxoenBwWTl2OGRIWjNGVnhWbEVFZ3Q2YW9lZ0tjU3pOWDFvVHJMZ3E1MTFSSVBjYlV3RjJBT0UwVzhsOHNKcGxFYVE1NWpqMEdUMGRKaFpnMXRtaExNRG98aHNYeHlXYjZrNlhaY2RKczgyMHU1cmRKK1lzdzZNODJlRVhnVDkyK1pJND0=/8"
     # 页面右上角，以及「关于」页面的二维码
     # 修改图片请替换 assets/images/qrcode.jpg
     qrcode:
