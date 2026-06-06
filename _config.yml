@@ -36,6 +36,12 @@ components:
     # 文章字数统计
     word_count:
         enabled: true
+    # 邮件订阅（follow.it）。注册 feed 后把订阅表单的 action 地址填到 follow_it_action
+    # 注册入口：https://follow.it/ → 输入 https://xiaosan-re.github.io/feed.xml
+    #          → Grow → Subscription form，复制 <form action="..."> 里的地址
+    subscribe:
+        enabled: true
+        follow_it_action: ""
     # 页面右上角，以及「关于」页面的二维码
     # 修改图片请替换 assets/images/qrcode.jpg
     qrcode:

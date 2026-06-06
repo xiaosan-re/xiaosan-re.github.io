@@ -1,0 +1,29 @@
+{% if site.components.subscribe.enabled %}
+<h3>订阅</h3>
+<div id="subscribe-box" style="font-size:13px;color:#666;margin-bottom:30px">
+  {% if site.components.subscribe.follow_it_action and site.components.subscribe.follow_it_action != "" %}
+  <p style="margin:0 0 8px">新文章邮件提醒，输入邮箱即可：</p>
+  <form action="{{ site.components.subscribe.follow_it_action }}" method="post"
+        target="popupwindow"
+        onsubmit="window.open('https://follow.it/now', 'popupwindow');"
+        style="margin:0">
+    <input type="email" name="email" placeholder="你的邮箱" required
+           style="width:100%;padding:6px 8px;box-sizing:border-box;border:1px solid #d8d8d8;border-radius:3px;margin-bottom:8px">
+    <input type="hidden" name="filter[locale]" value="zh">
+    <button type="submit"
+            style="width:100%;padding:7px 0;background:#4183c4;color:#fff;border:0;border-radius:3px;cursor:pointer">
+      邮件订阅
+    </button>
+  </form>
+  <p style="margin:8px 0 0">
+    或使用 <a href="{{ site.url }}{{ site.subscribe_rss }}" target="_blank" rel="noopener">RSS 订阅</a>
+  </p>
+  {% else %}
+  <p style="margin:0">
+    用 RSS 阅读器订阅
+    <a href="{{ site.url }}{{ site.subscribe_rss }}" target="_blank" rel="noopener">{{ site.subscribe_rss }}</a>
+    即可第一时间收到新文章。
+  </p>
+  {% endif %}
+</div>
+{% endif %}
