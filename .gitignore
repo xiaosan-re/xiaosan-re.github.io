@@ -13,3 +13,6 @@ Gemfile.lock
 # local bundler
 vendor/
 .bundle/
+
+# local preview tooling
+.claude/
