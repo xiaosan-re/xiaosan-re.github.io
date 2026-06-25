@@ -36,7 +36,7 @@ description: 完整拆解某 AI App（字节系）iOS 端的设备注册与 AI �
 
 两条最终跑通的链路，整体架构如下：
 
-![整体架构：设备注册与 AI 对话两条链路](/images/posts/ios/ai-app-protocol/01-architecture.svg)
+![整体架构：设备注册与 AI 对话两条链路](/images/posts/ios/ai-app-protocol/01-architecture.png)
 *图 1：整体架构——设备注册与 AI 对话两条链路*
 
 一个反直觉的结论先抛出来：**`device_register` 服务端不校验签名，`chat/completion` 校验。** 这决定了模拟执行产出的签名，在前者“可选”、在后者“必需”。
@@ -49,7 +49,7 @@ description: 完整拆解某 AI App（字节系）iOS 端的设备注册与 AI �
 
 设备注册不是“填个表发出去”，而是一条流水线。先看全貌，再逐段拆：
 
-![设备注册流水线：采集 → 组合 → gzip+加密 → 拼请求](/images/posts/ios/ai-app-protocol/02-register-pipeline.svg)
+![设备注册流水线：采集 → 组合 → gzip+加密 → 拼请求](/images/posts/ios/ai-app-protocol/02-register-pipeline.png)
 *图 2：设备注册流水线——采集 → 组合 → gzip+加密 → 拼请求*
 
 ### 2.2 采集：设备字段从哪来
@@ -133,7 +133,7 @@ body  = AES-128-CBC-PKCS7(key, iv, inner)
 out   = 74 63 05 10 00 00 || R || body
 ```
 
-![TTEncrypt 加密流程：key/iv 派生、inner 组装与输出帧布局](/images/posts/ios/ai-app-protocol/03-ttencrypt.svg)
+![TTEncrypt 加密流程：key/iv 派生、inner 组装与输出帧布局](/images/posts/ios/ai-app-protocol/03-ttencrypt.png)
 *图 3：TTEncrypt 加密流程——key/iv 派生、inner 组装与输出帧布局*
 
 派生函数 `sub_100AB6AEC` 的反编译把这套说得很清楚——SHA512(R) 先算一遍，紧接着把 CONST64 拼上去（两张表逐 16 字节异或、运行时算出），再 SHA512 一遍：
@@ -246,7 +246,7 @@ POST /service/3/device_sdk/stats_collect/?...&fetch_config=true
 
 > 这套为什么难伪造：它不是客户端随手能编的字段，而是**一组真实系统文件的时间戳 + Apple 签名的收据**。Carrier Bundles 的时间随设备激活/运营商更新固定、跨重装稳定，是强设备指纹；`d_r2` 那张收据是 Apple 私钥签的，伪不出来。再加上“采哪些文件”由服务端动态下发，连个固定靶子都不给你。
 
-![GF/dtrait 动态指纹采集：服务端下发配置 + 三层套娃上报](/images/posts/ios/ai-app-protocol/05-gf-dtrait.svg)
+![GF/dtrait 动态指纹采集：服务端下发配置 + 三层套娃上报](/images/posts/ios/ai-app-protocol/05-gf-dtrait.png)
 *图 5：GF/dtrait 动态指纹采集——服务端下发配置 + 三层套娃上报*
 
 一个容易踩的坑：**下发配置用的 bd_pack 常量和上报的设备数据不是同一个**——配置用 `GF_CONST1`（派生分支 `a7=1`），设备数据用 `GF_CONST`（`a7=0`）。解码器两个都得试。
@@ -348,7 +348,7 @@ IosSyscallHandler._handle_sys_semwait_signal = lambda self: 0
 
 ### 5.1 整体流程
 
-![对话流程：注册 → 拿会话 → 进会话 → chat → SSE 回复](/images/posts/ios/ai-app-protocol/06-chat-flow.svg)
+![对话流程：注册 → 拿会话 → 进会话 → chat → SSE 回复](/images/posts/ios/ai-app-protocol/06-chat-flow.png)
 *图 6：对话流程——注册 → 拿会话 → 进会话 → chat → SSE 回复*
 
 ### 5.2 对话接口结构
@@ -453,7 +453,7 @@ sub_111E08FF8(url, headers)
 
 把签名器内部画出来，就是一台带三层护甲的虚拟机：
 
-![签名器内部：字节码 VM + 三层自毁保护](/images/posts/ios/ai-app-protocol/08-signer-vm.svg)
+![签名器内部：字节码 VM + 三层自毁保护](/images/posts/ios/ai-app-protocol/08-signer-vm.png)
 *图 8：签名器内部——字节码 VM + 三层自毁保护*
 
 ### 6.2 X-Medusa 拆开：明文 protobuf 提取
@@ -526,14 +526,14 @@ P1(x) = x ^ ROL(x,15) ^ ROL(x,23)
 
 结论铁证：**W 数组完全 vreg 驻留 + 指针间接 + OLLVM 谓词交织，消息词不存在于任何连续 buffer。** 要字节级还原 `field13`，只剩 IDA GUI + 微码去混淆（d810）反虚拟化那段 VM SM3 是另一个量级的工程。
 
-![field13 反虚拟化：从定位到四法证伪，最终只剩 d810](/images/posts/ios/ai-app-protocol/09-field13-devirt.svg)
+![field13 反虚拟化：从定位到四法证伪，最终只剩 d810](/images/posts/ios/ai-app-protocol/09-field13-devirt.png)
 *图 9：field13 反虚拟化——从定位到四法证伪，最终只剩 d810*
 
 ### 6.5 VM 字节码反汇编与还原高级代码
 
 前面几节都在用 VM 的执行结果，这里单独把方法说清：**怎么把这套字节码反汇编出来、再往高级代码还原**。
 
-![VM 反汇编到还原高级代码的流水线](/images/posts/ios/ai-app-protocol/10-vm-lift.svg)
+![VM 反汇编到还原高级代码的流水线](/images/posts/ios/ai-app-protocol/10-vm-lift.png)
 *图 10：VM 反汇编到还原高级代码的流水线*
 
 **反汇编：只能动态，不能静态。** 直接静态反汇编这套字节码会得到一堆乱码，原因有三：
@@ -675,7 +675,7 @@ ret                 ; 跳到「算出来的」地址
 
 **④ 没有固定 hook 点**：这版 TTNet 是 Rust 直调 metasec native C，**不走 ObjC 方法**——按 selector 过滤 `objc_msgSend` 0 命中。签名计算又全在 VM 里 `br x8` 计算派发，没有 `bl 某函数` 这种固定调用点可下钩。
 
-![反 frida / 反 trace：三条动态路各自的崩因](/images/posts/ios/ai-app-protocol/11-antifrida.svg)
+![反 frida / 反 trace：三条动态路各自的崩因](/images/posts/ios/ai-app-protocol/11-antifrida.png)
 *图 11：反 frida / 反 trace——三条动态路各自的崩因*
 
 唯一安全的姿势：hook **非 metasec 的 ttnet 胶水层**（请求编排、`MD5(body)` 那些），从边界读 I/O、反推，但碰不到签名内部。
@@ -694,7 +694,7 @@ ret                 ; 跳到「算出来的」地址
 
 把第六、七节连起来看，metasec 的设计哲学就是三道咬合的防御，而它们共享同一个盲点：
 
-![三道咬合防御 vs 模拟执行的干净环境](/images/posts/ios/ai-app-protocol/12-defense.svg)
+![三道咬合防御 vs 模拟执行的干净环境](/images/posts/ios/ai-app-protocol/12-defense.png)
 *图 12：三道咬合防御 vs 模拟执行的干净环境*
 
 > **签名 = 设备指纹（绑死硬件）× 国密 VM（算法藏起来）× 风险画像（环境脏就退化）**，三者层层咬合，任何一环单独绕不够。但它最大的盲点是「假设自己跑在真实、脏的设备上」——模拟执行给它一台**干净的虚拟设备、原样跑函数**，反调试、反插桩、风险画像同时落空。
