@@ -1,0 +1,39 @@
+<svg viewBox="0 0 800 372" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="n_a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#dc2626"/></marker>
+    <marker id="n_g" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#16a34a"/></marker>
+    <style>
+      .tool{fill:#eef2ff;stroke:#6366f1;stroke-width:1.5}
+      .crash{fill:#fee2e2;stroke:#ef4444;stroke-width:1.5}
+      .base{fill:#fff7ed;stroke:#ea580c;stroke-width:1.5}
+      .safe{fill:#dcfce7;stroke:#16a34a;stroke-width:1.7}
+      .t{font-size:12.5px;fill:#1e293b;text-anchor:middle}
+      .ts{font-size:11px;fill:#475569;text-anchor:middle}
+      .e{stroke:#dc2626;stroke-width:1.6;fill:none;marker-end:url(#n_a)}
+      .g{stroke:#16a34a;stroke-width:1.8;fill:none;marker-end:url(#n_g)}
+      .h{font-size:13px;font-weight:700;text-anchor:middle}
+    </style>
+  </defs>
+
+  <text class="h" x="150" y="24" fill="#3730a3">动态分析路</text>
+  <text class="h" x="600" y="24" fill="#b91c1c">崩因（反编译实锤）</text>
+
+  <g><rect class="tool" x="20" y="40" width="250" height="44" rx="7"/><text class="t" x="145" y="58">IDA 远程单步</text><text class="ts" x="145" y="74">附加调试器</text></g>
+  <g><rect class="tool" x="20" y="100" width="250" height="44" rx="7"/><text class="t" x="145" y="118">Frida Stalker 跟进</text><text class="ts" x="145" y="134">搬代码到 scratch 执行</text></g>
+  <g><rect class="tool" x="20" y="160" width="250" height="44" rx="7"/><text class="t" x="145" y="178">Frida Interceptor / 枚举类</text><text class="ts" x="145" y="194">打补丁 / 碰类</text></g>
+
+  <g><rect class="crash" x="470" y="40" width="310" height="44" rx="7"/><text class="t" x="625" y="58">慢 + LL/SC 活锁</text><text class="ts" x="625" y="74">单步下独占监视器每步被清</text></g>
+  <g><rect class="crash" x="470" y="100" width="310" height="44" rx="7"/><text class="t" x="625" y="118">return-gadget 跳飞</text><text class="ts" x="625" y="134">LR 算术依赖真实返回地址</text></g>
+  <g><rect class="crash" x="470" y="160" width="310" height="44" rx="7"/><text class="t" x="625" y="178">~25s Process terminated</text><text class="ts" x="625" y="194">懒守卫：改码/碰类即触发</text></g>
+
+  <path class="e" d="M270,62 L468,62"/>
+  <path class="e" d="M270,122 L468,122"/>
+  <path class="e" d="M270,182 L468,182"/>
+
+  <!-- 反调试底座 -->
+  <g><rect class="base" x="120" y="232" width="560" height="40" rx="9"/><text class="t" x="400" y="250" font-weight="700" fill="#9a3412">底座反调试：sysctl(KERN_PROC) 查 P_TRACED</text><text class="ts" x="400" y="266" fill="#9a3412">debugger / frida-server 用 ptrace 附加即中招</text></g>
+
+  <!-- 唯一安全 -->
+  <g><rect class="safe" x="120" y="300" width="560" height="50" rx="10"/><text class="t" x="400" y="322" font-weight="700" fill="#166534">唯一安全：硬件断点（无痕，保留真 LR）/ hook ttnet 胶水层</text><text class="ts" x="400" y="340" fill="#166534">QBDI · Unicorn 原地执行同样免疫 —— 不搬码、不打补丁</text></g>
+  <path class="g" d="M400,272 L400,298"/>
+</svg>

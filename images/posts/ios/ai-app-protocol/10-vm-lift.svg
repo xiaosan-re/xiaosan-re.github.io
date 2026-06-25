@@ -1,0 +1,40 @@
+<svg viewBox="0 0 880 312" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="vl_a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#475569"/></marker>
+    <marker id="vl_r" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#dc2626"/></marker>
+    <style>
+      .in{fill:#e5e7eb;stroke:#64748b;stroke-width:1.5}
+      .b{fill:#eef2ff;stroke:#6366f1;stroke-width:1.5}
+      .c{fill:#fef3c7;stroke:#f59e0b;stroke-width:1.5}
+      .ok{fill:#dcfce7;stroke:#22c55e;stroke-width:1.6}
+      .wall{fill:#fee2e2;stroke:#ef4444;stroke-width:1.5}
+      .end{fill:#fde68a;stroke:#d97706;stroke-width:1.6}
+      .t{font-size:12.5px;fill:#1e293b;text-anchor:middle;font-weight:700}
+      .ts{font-size:10.5px;fill:#475569;text-anchor:middle}
+      .mono{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;fill:#1e293b;text-anchor:middle}
+      .e{stroke:#475569;stroke-width:1.7;fill:none;marker-end:url(#vl_a)}
+      .er{stroke:#dc2626;stroke-width:1.6;fill:none;stroke-dasharray:5 4;marker-end:url(#vl_r)}
+      .lbl{font-size:11px;font-weight:700;fill:#3730a3}
+      .xl{font-size:11px;font-weight:700;fill:#b91c1c}
+    </style>
+  </defs>
+
+  <text class="lbl" x="14" y="26">反汇编 → 还原高级代码</text>
+  <g><rect class="in" x="14" y="38" width="150" height="58" rx="8"/><text class="t" x="89" y="62">动态执行 trace</text><text class="ts" x="89" y="80">只走到的路径已解密</text></g>
+  <g><rect class="b" x="186" y="38" width="156" height="58" rx="8"/><text class="t" x="264" y="58">VM 反汇编</text><text class="ts" x="264" y="74">钩派发点 → op·操作数</text><text class="ts" x="264" y="88">vreg 值</text></g>
+  <g><rect class="b" x="364" y="38" width="156" height="58" rx="8"/><text class="t" x="442" y="58">语义识别</text><text class="mono" x="442" y="75">0x79cc4519 → SM3</text><text class="ts" x="442" y="89">26 个标量 opcode</text></g>
+  <g><rect class="b" x="542" y="38" width="156" height="58" rx="8"/><text class="t" x="620" y="58">数据流回溯</text><text class="ts" x="620" y="74">从输出反向切片</text><text class="ts" x="620" y="88">认出轮结构 → 折叠</text></g>
+  <g><rect class="ok" x="720" y="38" width="150" height="58" rx="8"/><text class="t" x="795" y="60">高级代码</text><text class="mono" x="795" y="80">f14=SM3(query)[:6]</text></g>
+  <path class="e" d="M164,67 L184,67"/>
+  <path class="e" d="M342,67 L362,67"/>
+  <path class="e" d="M520,67 L540,67"/>
+  <path class="e" d="M698,67 L718,67"/>
+
+  <!-- 难例分支 -->
+  <text class="xl" x="14" y="158">难例:绑设备 / 指针间接</text>
+  <path class="er" d="M620,96 L620,176"/>
+  <text class="ts" x="700" y="140" fill="#b91c1c">field13:回溯只到 SM3 中间态</text>
+  <g><rect class="wall" x="360" y="176" width="300" height="50" rx="9"/><text class="t" x="510" y="198" fill="#b91c1c">vreg 指针间接 + OLLVM 谓词交织</text><text class="ts" x="510" y="216" fill="#7f1d1d">消息词不在任何连续 buffer</text></g>
+  <path class="er" d="M510,226 L510,250"/>
+  <g><rect class="end" x="300" y="252" width="420" height="46" rx="9"/><text class="t" x="510" y="272">指针感知符号执行　/　IDA + d810 微码去混淆</text><text class="ts" x="510" y="288">「还原高级代码」的重武器,需 GUI 交互</text></g>
+</svg>

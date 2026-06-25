@@ -1,0 +1,51 @@
+<svg viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#475569"/></marker>
+    <marker id="ad" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#0284c7"/></marker>
+    <style>
+      .in{fill:#e0e7ff;stroke:#6366f1;stroke-width:1.5}
+      .op{fill:#f1f5f9;stroke:#64748b;stroke-width:1.4}
+      .key{fill:#fef3c7;stroke:#f59e0b;stroke-width:1.5}
+      .aes{fill:#fde68a;stroke:#d97706;stroke-width:1.8}
+      .t{font-size:12px;fill:#1e293b;text-anchor:middle}
+      .ts{font-size:10.5px;fill:#475569;text-anchor:middle}
+      .mono{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;fill:#1e293b;text-anchor:middle}
+      .e{stroke:#475569;stroke-width:1.6;fill:none;marker-end:url(#a)}
+      .d{stroke:#0284c7;stroke-width:1.4;fill:none;stroke-dasharray:5 3;marker-end:url(#ad)}
+      .seg-m{fill:#fed7aa;stroke:#ea580c;stroke-width:1.4}
+      .seg-r{fill:#c7d2fe;stroke:#4f46e5;stroke-width:1.4}
+      .seg-b{fill:#bbf7d0;stroke:#16a34a;stroke-width:1.4}
+      .cap{font-size:11px;fill:#64748b;text-anchor:middle}
+    </style>
+  </defs>
+
+  <!-- 派生 key/iv -->
+  <g><rect class="in" x="14" y="20" width="104" height="40" rx="7"/><text class="t" x="66" y="38">R</text><text class="ts" x="66" y="52">32 随机字节</text></g>
+  <g><rect class="op" x="146" y="20" width="74" height="40" rx="7"/><text class="t" x="183" y="45">SHA512</text></g>
+  <g><rect class="op" x="246" y="20" width="176" height="40" rx="7"/><text class="t" x="334" y="38">‖ CONST64</text><text class="ts" x="334" y="52">→ SHA512（逆S-box两半异或）</text></g>
+  <g><rect class="key" x="430" y="20" width="120" height="40" rx="7"/><text class="t" x="490" y="38">key = [0:16]</text><text class="ts" x="490" y="52">iv = [16:32]</text></g>
+  <path class="e" d="M118,40 L144,40"/>
+  <path class="e" d="M220,40 L244,40"/>
+  <path class="e" d="M422,40 L428,40"/>
+
+  <!-- 组 inner -->
+  <g><rect class="in" x="14" y="110" width="104" height="40" rx="7"/><text class="t" x="66" y="128">P = 明文</text><text class="ts" x="66" y="142">gzip(JSON)</text></g>
+  <g><rect class="op" x="146" y="110" width="180" height="40" rx="7"/><text class="t" x="236" y="128">inner</text><text class="ts" x="236" y="142">SHA512(P) ‖ P</text></g>
+  <path class="e" d="M118,130 L144,130"/>
+
+  <!-- AES -->
+  <g><rect class="aes" x="560" y="62" width="180" height="56" rx="9"/><text class="t" x="650" y="84" font-weight="700">AES-128-CBC</text><text class="ts" x="650" y="102">(key, iv) 加密 inner</text></g>
+  <path class="e" d="M550,46 C 600,52 600,70 558,82"/>
+  <path class="e" d="M326,135 C 470,135 470,108 558,98"/>
+
+  <!-- 输出帧字节布局 -->
+  <text class="cap" x="410" y="186" font-weight="700" fill="#334155">out 帧布局</text>
+  <g><rect class="seg-m" x="40" y="198" width="150" height="40" rx="5"/><text class="mono" x="115" y="216">74 63 05 10</text><text class="ts" x="115" y="230">magic 4B</text></g>
+  <g><rect class="seg-r" x="190" y="198" width="180" height="40" rx="5"/><text class="t" x="280" y="216">R</text><text class="ts" x="280" y="230">32B（内嵌，免协商）</text></g>
+  <g><rect class="seg-b" x="370" y="198" width="410" height="40" rx="5"/><text class="t" x="575" y="216">AES-CBC body</text><text class="ts" x="575" y="230">SHA512(P)‖P 的密文</text></g>
+  <text class="cap" x="410" y="262">Content-Type: application/octet-stream;tt-data=a　·　对称自包含，可加密亦可解密</text>
+
+  <!-- 连线到帧 -->
+  <path class="d" d="M66,60 C 66,150 110,170 115,196"/>
+  <path class="e" d="M650,118 C 650,160 600,180 575,196"/>
+</svg>

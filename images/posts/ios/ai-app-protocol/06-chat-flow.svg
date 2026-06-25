@@ -1,0 +1,22 @@
+<svg viewBox="0 0 880 118" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="cf_a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#475569"/></marker>
+    <style>
+      .box{fill:#eef2ff;stroke:#6366f1;stroke-width:1.5}
+      .crypto{fill:#fef3c7;stroke:#f59e0b;stroke-width:1.5}
+      .out{fill:#dcfce7;stroke:#22c55e;stroke-width:1.5}
+      .t{font-size:12.5px;fill:#1e293b;text-anchor:middle;font-weight:700}
+      .ts{font-size:10.5px;fill:#475569;text-anchor:middle}
+      .e{stroke:#475569;stroke-width:1.7;fill:none;marker-end:url(#cf_a)}
+    </style>
+  </defs>
+  <g><rect class="box" x="8" y="26" width="156" height="58" rx="8"/><text class="t" x="86" y="50">注册设备</text><text class="ts" x="86" y="68">拿 cookie</text></g>
+  <g><rect class="box" x="182" y="26" width="156" height="58" rx="8"/><text class="t" x="260" y="50">conversation/main</text><text class="ts" x="260" y="68">拿主会话 id</text></g>
+  <g><rect class="box" x="356" y="26" width="156" height="58" rx="8"/><text class="t" x="434" y="50">conversation/in_out</text><text class="ts" x="434" y="68">进会话 · cmd 4210</text></g>
+  <g><rect class="crypto" x="530" y="26" width="156" height="58" rx="8"/><text class="t" x="608" y="50">chat/completion</text><text class="ts" x="608" y="68">明文 JSON + 签名头</text></g>
+  <g><rect class="out" x="704" y="26" width="168" height="58" rx="8"/><text class="t" x="788" y="50">SSE 流式回复</text><text class="ts" x="788" y="68">CHUNK_DELTA → 文本</text></g>
+  <path class="e" d="M164,55 L180,55"/>
+  <path class="e" d="M338,55 L354,55"/>
+  <path class="e" d="M512,55 L528,55"/>
+  <path class="e" d="M686,55 L702,55"/>
+</svg>

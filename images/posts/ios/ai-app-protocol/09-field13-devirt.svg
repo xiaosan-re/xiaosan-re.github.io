@@ -1,0 +1,41 @@
+<svg viewBox="0 0 720 432" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="f_a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#475569"/></marker>
+    <style>
+      .b{fill:#eef2ff;stroke:#6366f1;stroke-width:1.5}
+      .c{fill:#fef3c7;stroke:#f59e0b;stroke-width:1.5}
+      .try{fill:#f1f5f9;stroke:#94a3b8;stroke-width:1.4}
+      .wall{fill:#fee2e2;stroke:#ef4444;stroke-width:1.6}
+      .end{fill:#fde68a;stroke:#d97706;stroke-width:1.8}
+      .t{font-size:13px;fill:#1e293b;text-anchor:middle}
+      .ts{font-size:11px;fill:#475569;text-anchor:middle}
+      .mono{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;fill:#1e293b;text-anchor:middle}
+      .e{stroke:#475569;stroke-width:1.7;fill:none;marker-end:url(#f_a)}
+      .x{font-size:11px;fill:#b91c1c;font-weight:700;text-anchor:middle}
+    </style>
+  </defs>
+
+  <g><rect class="b" x="200" y="14" width="320" height="40" rx="7"/><text class="t" x="360" y="32">field13 = X-Medusa 明文里的 20 字节</text><text class="ts" x="360" y="47">随设备变，不是 query 的任何哈希</text></g>
+  <path class="e" d="M360,54 L360,72"/>
+  <g><rect class="b" x="170" y="74" width="380" height="40" rx="7"/><text class="t" x="360" y="92">定位：摘要首字节在 0x1002b64bc 写出</text><text class="ts" x="360" y="107">= VM 的 XOR opcode = SM3 feed-forward 终结</text></g>
+  <path class="e" d="M360,114 L360,132"/>
+  <g><rect class="c" x="190" y="134" width="340" height="40" rx="7"/><text class="t" x="360" y="152">性质：键控 SM3（设备指纹 blob）[:20]</text><text class="ts" x="360" y="167">约 9 块 ≈ 512 字节 · 含 mssdk key</text></g>
+  <path class="e" d="M360,174 L360,192"/>
+
+  <!-- 四法 -->
+  <g><rect class="try" x="120" y="194" width="480" height="86" rx="9"/>
+     <text class="t" x="360" y="214" font-weight="700">想还原这 512 字节消息？四法尝试</text>
+     <g><rect class="b" x="138" y="224" width="218" height="22" rx="4"/><text class="ts" x="247" y="239">① 值导向后向数据流切片</text></g>
+     <g><rect class="b" x="364" y="224" width="218" height="22" rx="4"/><text class="ts" x="473" y="239">② 连续地址 + 扩展公式验证</text></g>
+     <g><rect class="b" x="138" y="250" width="218" height="22" rx="4"/><text class="ts" x="247" y="265">③ 每块 64B buffer 抽取</text></g>
+     <g><rect class="b" x="364" y="250" width="218" height="22" rx="4"/><text class="ts" x="473" y="265">④ 指针表解引用</text></g>
+  </g>
+  <path class="e" d="M360,280 L360,298"/>
+  <g><rect class="wall" x="150" y="300" width="420" height="58" rx="9"/>
+     <text class="x" x="360" y="320" font-size="13">全部证伪</text>
+     <text class="ts" x="360" y="338" fill="#7f1d1d">SM3 扩展公式在 flat 内存零命中</text>
+     <text class="ts" x="360" y="353" fill="#7f1d1d">W 数组 = vreg 驻留 + 指针间接 + OLLVM 谓词交织</text>
+  </g>
+  <path class="e" d="M360,358 L360,376"/>
+  <g><rect class="end" x="180" y="378" width="360" height="40" rx="9"/><text class="t" x="360" y="396" font-weight="700">字节级还原只剩：IDA GUI + d810 反虚拟化</text><text class="ts" x="360" y="411">headless 驱不动，是另一个量级的工程</text></g>
+</svg>

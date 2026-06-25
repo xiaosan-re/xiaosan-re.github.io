@@ -1,0 +1,39 @@
+<svg viewBox="0 0 720 372" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#475569"/></marker>
+    <marker id="ar2r" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#dc2626"/></marker>
+    <style>
+      .b{fill:#eef2ff;stroke:#6366f1;stroke-width:1.5}
+      .c{fill:#fef3c7;stroke:#f59e0b;stroke-width:1.5}
+      .o{fill:#dcfce7;stroke:#22c55e;stroke-width:1.5}
+      .p{fill:#fee2e2;stroke:#ef4444;stroke-width:1.5}
+      .t{font-size:13px;fill:#1e293b;text-anchor:middle}
+      .ts{font-size:11.5px;fill:#475569;text-anchor:middle}
+      .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;fill:#1e293b;text-anchor:middle}
+      .e{stroke:#475569;stroke-width:1.7;fill:none;marker-end:url(#ar2)}
+      .d{stroke:#dc2626;stroke-width:1.5;fill:none;stroke-dasharray:5 4;marker-end:url(#ar2r)}
+      .dl{font-size:11px;fill:#b91c1c;font-weight:700}
+    </style>
+  </defs>
+
+  <g><rect class="b" x="120" y="16" width="300" height="38" rx="7"/><text class="mono" x="270" y="40">sub_111E08FF8(url, headers)</text></g>
+  <path class="e" d="M270,54 L270,76"/>
+  <g><rect class="b" x="150" y="78" width="240" height="38" rx="7"/><text class="mono" x="270" y="102">vm_run(vm_code, args)</text></g>
+  <path class="e" d="M270,116 L270,138"/>
+  <g><rect class="b" x="120" y="140" width="300" height="52" rx="7"/><text class="t" x="270" y="160">解释器 sub_1002B3EDC</text><text class="ts" x="270" y="180">dispatcher：fetch → decode → br x8</text></g>
+  <path class="e" d="M270,192 L270,214"/>
+  <g><rect class="c" x="120" y="216" width="300" height="52" rx="7"/><text class="t" x="270" y="236">26 个 opcode handler</text><text class="ts" x="270" y="256">XOR·ADD·ROR… 软件拼 SM3 / SHA1 / MD5</text></g>
+  <path class="e" d="M270,268 L270,290"/>
+  <g><rect class="o" x="120" y="292" width="300" height="40" rx="7"/><text class="t" x="270" y="316">X-Gorgon · X-Medusa · X-Argus · X-Ladon · …</text></g>
+
+  <!-- 三层保护 -->
+  <g><rect class="p" x="470" y="150" width="232" height="120" rx="9"/>
+     <text class="t" x="586" y="174" font-weight="700" fill="#b91c1c">三层自毁保护</text>
+     <text class="ts" x="586" y="200" text-anchor="middle">① opcode 滚动解密</text>
+     <text class="ts" x="586" y="222" text-anchor="middle">② var_60 滚动密钥</text>
+     <text class="ts" x="586" y="244" text-anchor="middle">③ 自地址派生密钥 X5/X6</text>
+  </g>
+  <path class="d" d="M470,186 L422,166"/>
+  <path class="d" d="M470,240 L422,244"/>
+  <text class="dl" x="430" y="146">改一字节就跳飞</text>
+</svg>

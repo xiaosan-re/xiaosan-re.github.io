@@ -1,0 +1,34 @@
+<svg viewBox="0 0 880 172" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="rp_a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#475569"/></marker>
+    <style>
+      .ep{fill:#e5e7eb;stroke:#64748b;stroke-width:1.5}
+      .box{fill:#eef2ff;stroke:#6366f1;stroke-width:1.5}
+      .crypto{fill:#fef3c7;stroke:#f59e0b;stroke-width:1.5}
+      .t{font-size:13px;fill:#1e293b;text-anchor:middle;font-weight:700}
+      .ts{font-size:11px;fill:#475569;text-anchor:middle}
+      .lyr{font-size:11px;fill:#7c3aed;text-anchor:middle}
+      .lyr2{font-size:10.5px;fill:#94a3b8;text-anchor:middle}
+      .e{stroke:#475569;stroke-width:1.8;fill:none;marker-end:url(#rp_a)}
+    </style>
+  </defs>
+
+  <g><rect class="ep" x="10" y="40" width="58" height="54" rx="7"/><text class="t" x="39" y="72">设备</text></g>
+  <g><rect class="box" x="92" y="40" width="156" height="54" rx="8"/><text class="t" x="170" y="62">采集</text><text class="ts" x="170" y="80">各种指纹</text></g>
+  <g><rect class="box" x="272" y="40" width="156" height="54" rx="8"/><text class="t" x="350" y="62">组合</text><text class="ts" x="350" y="80">JSON body</text></g>
+  <g><rect class="crypto" x="452" y="40" width="156" height="54" rx="8"/><text class="t" x="530" y="62">gzip + 加密</text><text class="ts" x="530" y="80">TTEncrypt</text></g>
+  <g><rect class="box" x="632" y="40" width="156" height="54" rx="8"/><text class="t" x="710" y="62">拼请求</text><text class="ts" x="710" y="80">url + 头 + 体</text></g>
+  <g><rect class="ep" x="812" y="40" width="58" height="54" rx="7"/><text class="t" x="841" y="72">服务器</text></g>
+
+  <path class="e" d="M68,67 L90,67"/>
+  <path class="e" d="M248,67 L270,67"/>
+  <path class="e" d="M428,67 L450,67"/>
+  <path class="e" d="M608,67 L630,67"/>
+  <path class="e" d="M788,67 L810,67"/>
+
+  <!-- 层标注 -->
+  <text class="lyr"  x="170" y="120">BDInstall</text><text class="lyr2" x="170" y="136">字段采集层</text>
+  <text class="lyr"  x="350" y="120">BDInstall</text><text class="lyr2" x="350" y="136">序列化层</text>
+  <text class="lyr"  x="530" y="120">原生密码原语</text><text class="lyr2" x="530" y="136">SHA512 + AES</text>
+  <text class="lyr"  x="710" y="120">TTNet</text><text class="lyr2" x="710" y="136">发送层</text>
+</svg>

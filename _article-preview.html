@@ -1,0 +1,746 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>逆向某 AI App：设备注册与 AI 对话的完整协议分析</title><style>
+body{background:#fff;color:#24292f;font-family:-apple-system,'PingFang SC','Microsoft YaHei',Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.75;max-width:840px;margin:0 auto;padding:32px 20px 80px}
+h1{font-size:26px;border-bottom:2px solid #e5e7eb;padding-bottom:10px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid #eaecef;padding-bottom:6px}
+h3{font-size:17px;margin-top:26px}
+p,li{font-size:15px}
+img{max-width:100%;border:1px solid #eef2f7;border-radius:8px;display:block;margin:14px 0}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px}
+th,td{border:1px solid #d0d7de;padding:7px 11px;text-align:left;vertical-align:top}
+th{background:#f6f8fa;font-weight:700}
+code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+pre{background:#f6f8fa;border:1px solid #e5e7eb;border-radius:8px;padding:13px 15px;overflow:auto}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.55}
+blockquote{border-left:4px solid #d0d7de;margin:14px 0;padding:4px 16px;color:#57606a;background:#f6f8fa;border-radius:0 6px 6px 0}
+a{color:#0969da;text-decoration:none}
+</style></head>
+<body><h1>逆向某 AI App：设备注册与 AI 对话的完整协议分析</h1><h2>一、背景 &amp; 场景</h2>
+<h3>1.1 环境</h3>
+<p>设备：iPhone 14 / iOS 16.4.1 / 越狱（Dopamine）
+工具链：Frida 16.1.4、IDA Pro 9.3、基于 <a href="https://github.com/unicorn-engine/unicorn">Unicorn</a> 自建的 iOS 模拟执行环境、Charles
+目标：某 AI 对话 App，iOS 端</p>
+<blockquote>
+<p>为避免针对具体业务，下文统一称“某 App”，主机名、bot_id、device_id 等做了脱敏，不影响技术结论。</p>
+</blockquote>
+<h3>1.2 引言</h3>
+<p>逆向一个 App 的网络协议，要把整条链拆清楚，绕不开三道关：</p>
+<ol>
+<li><strong>设备指纹采集</strong>——一个请求 body 里塞了几十个设备字段，得厘清每个从哪来；</li>
+<li><strong>请求体加密</strong>（TTEncrypt）——body 是二进制密文；</li>
+<li><strong>请求签名</strong>（metasec / Argus 套件）——<code>X-Gorgon</code> 等一堆头，算法藏在重度混淆的 native 代码里。</li>
+</ol>
+<p>本文围绕两个核心接口——<code>device_register</code>（设备注册）和 <code>chat/completion</code>（AI 对话）——逐层拆。前两关可以静态还原；签名因 OLLVM + 国密混淆，静态逆向性价比极低。这里有个分析上的取舍：<strong>签名算法静态难以推进时，与其耗在静态分析上，不如把真实二进制放进受控模拟环境执行、直接观测它产出的签名头</strong>——「读懂算法」暂时换成「动态观测产物」，先把协议这条链验证通，再回头深挖算法本身（第六节）。</p>
+<h3>1.3 研究动机与目标</h3>
+<ul>
+<li>设备注册的 body 里那几十个字段，<strong>分别从哪采集、怎么组合、怎么加密</strong>？</li>
+<li>纯协议生成的 <code>device_id</code>，服务器<strong>认不认、能不能用</strong>？</li>
+<li>那一堆 <code>X-Gorgon / X-Argus</code> 签名头，<strong>哪些接口真校验</strong>？签名算法 OLLVM 混淆到读不动时，有没有<strong>不逆算法也能拿到正确签名</strong>的办法？</li>
+</ul>
+<h3>1.4 整体流程与框架</h3>
+<p>两条最终跑通的链路，整体架构如下：</p>
+<p><img alt="整体架构：设备注册与 AI 对话两条链路" src="images/posts/ios/ai-app-protocol/architecture.svg" /></p>
+<p>一个反直觉的结论先抛出来：<strong><code>device_register</code> 服务端不校验签名，<code>chat/completion</code> 校验。</strong> 这决定了模拟执行产出的签名，在前者“可选”、在后者“必需”。</p>
+<hr />
+<h2>二、设备注册：采集 → 组合 → 加密 → 请求</h2>
+<h3>2.1 整体流程</h3>
+<p>设备注册不是“填个表发出去”，而是一条流水线。先看全貌，再逐段拆：</p>
+<p><img alt="设备注册流水线：采集 → 组合 → gzip+加密 → 拼请求" src="images/posts/ios/ai-app-protocol/register-pipeline.svg" /></p>
+<h3>2.2 采集：设备字段从哪来</h3>
+<p>body 的 <code>header{}</code> 由 BDInstall（RangersAppLog）逐项采集。关键入口 <code>+[BDInstallNetworkUtility commonURLParameters]</code> / <code>onTheFlyParameter</code>，外加一层“混淆采集” <code>+[BDInstallExtraParams extraParams]</code>（字段名用 base64 藏起来，所以源码里 grep 不到）。</p>
+<table>
+<thead>
+<tr>
+<th>body 字段</th>
+<th>采集来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>device_model</code></td>
+<td><code>sysctl hw.machine</code>（如 iPhone14,7）</td>
+</tr>
+<tr>
+<td><code>hardware_model</code></td>
+<td><code>sysctl hw.model</code>（如 D27AP）——base64 key 混淆采集</td>
+</tr>
+<tr>
+<td><code>resolution</code></td>
+<td><code>UIScreen.nativeBounds × scale</code>（1170*2532）</td>
+</tr>
+<tr>
+<td><code>vendor_id</code></td>
+<td>IDFV，<code>UIDevice.identifierForVendor</code></td>
+</tr>
+<tr>
+<td><code>idfa</code></td>
+<td>ATT <code>trackingIdentifier</code>（未授权返回全 0）</td>
+</tr>
+<tr>
+<td><code>cdid</code></td>
+<td>本地持久化的 UUID（首启生成、长期不变）</td>
+</tr>
+<tr>
+<td><code>os_version</code></td>
+<td><code>UIDevice.systemVersion</code></td>
+</tr>
+<tr>
+<td><code>mcc_mnc</code></td>
+<td>CoreTelephony 运营商</td>
+</tr>
+<tr>
+<td><code>access</code> / <code>ac</code></td>
+<td>网络类型（WIFI…）</td>
+</tr>
+<tr>
+<td><code>timezone</code> / <code>tz_name</code></td>
+<td><code>NSTimeZone</code></td>
+</tr>
+<tr>
+<td><code>mb_time</code> / <code>device_init_time</code></td>
+<td>SDK 首启 / 设备初始化时戳——base64 key 混淆采集</td>
+</tr>
+<tr>
+<td><code>aid</code> / <code>channel</code> / <code>appName</code></td>
+<td>全局配置</td>
+</tr>
+<tr>
+<td><code>device_id</code> / <code>install_id</code> / <code>device_token</code></td>
+<td>文件 / Keychain；<strong>首次注册为空，由服务器分配</strong></td>
+</tr>
+</tbody>
+</table>
+<p>带“base64-key 混淆采集”的那几个，反编译里长这样——字段名藏在 base64（grep 不到），值现场取：</p>
+<pre><code class="language-c">// +[BDInstallExtraParams extraParams]
+v8  = +[BDInstallAxtraLT      getMB0];   // mb_time（SDK 首启时戳）
+v12 = +[BDInstallAxtraModUtils getMO0];   // hardware_model
+v20 = +[BDInstallAxtraLT      getDI0];   // device_init_time
+</code></pre>
+<p>而 <code>getMO0</code> 往下就是一次 <code>sysctlbyname</code>，交叉引用看得很直白：</p>
+<pre><code>[api 'hw.model']    &lt;- +[BDInstallAxtraModUtils getMO0]      →  &quot;D27AP&quot;      (hardware_model)
+[api 'hw.machine']  &lt;- +[BDInstallNetworkUtility platform]    →  &quot;iPhone14,7&quot; (device_model)
+</code></pre>
+<blockquote>
+<p>关键洞察：真正决定“这是哪台设备”的，是 <code>vendor_id</code>(IDFV) + <code>cdid</code> 这组<strong>客户端生成的稳定标识</strong>。服务器据此判断新老设备。把这两个换成全新 UUID、<code>device_id</code> 留空，就等于“一台没见过的新手机”。</p>
+</blockquote>
+<h3>2.3 组合：拼成请求 body</h3>
+<p>采集完，BDInstall 序列化层把字段拼成一个固定结构的 JSON：</p>
+<pre><code class="language-json">{ &quot;magic_tag&quot;: &quot;ss_app_log&quot;,
+  &quot;header&quot;: { &quot;device_id&quot;:&quot;&quot;, &quot;vendor_id&quot;:&quot;&lt;IDFV&gt;&quot;, &quot;cdid&quot;:&quot;&lt;UUID&gt;&quot;,
+              &quot;device_model&quot;:&quot;iPhone14,7&quot;, &quot;hardware_model&quot;:&quot;D27AP&quot;,
+              &quot;resolution&quot;:&quot;1170*2532&quot;, &quot;os_version&quot;:&quot;16.4.1&quot;, &quot;region&quot;:&quot;TW&quot;,
+              &quot;custom&quot;: { &quot;mcc_mnc&quot;:&quot;...&quot;, &quot;flow_app_variant&quot;:&quot;...&quot;, ... },
+              ... } }
+</code></pre>
+<p>组合链：</p>
+<pre><code>-[BDInstallRequestSerializer commonHandleWithRequest:params:]   @0x10d53f428
+  params → btd_safeJsonStringEncoded（紧凑 JSON，无空格）
+         → dataByGZipCompressingWithError（gzip = P）
+         → bd_dataByDecorated → bd_dataByRandom（@0x10071562c）
+         → 核心 sub_10D48009C（@0x10d48009c）
+</code></pre>
+<h3>2.4 加密：TTEncrypt</h3>
+<p>抓包里 body 是这样的：</p>
+<pre><code>Content-Type: application/octet-stream;tt-data=a
+body:  74 63 05 10 00 00 | &lt;32 字节 R&gt; | &lt;AES 密文&gt;
+</code></pre>
+<p>头 4 字节 <code>74 63 05 10</code>（小端 magic <code>0x10056374</code>）是 TTEncrypt 帧头。逐个 hook 核心里的原生原语 dump 出 <code>R / key / iv / inner / out</code>，算法就清晰了：</p>
+<pre><code>R   = 32 随机字节                              # 任意 32 字节都行
+key = SHA512( SHA512(R) || CONST64 )[0:16]     # AES-128 key
+iv  = SHA512( SHA512(R) || CONST64 )[16:32]    # iv
+inner = SHA512(P) || P                          # P = gzip(紧凑JSON)
+body  = AES-128-CBC-PKCS7(key, iv, inner)
+out   = 74 63 05 10 00 00 || R || body
+</code></pre>
+<p><img alt="TTEncrypt 加密流程：key/iv 派生、inner 组装与输出帧布局" src="images/posts/ios/ai-app-protocol/ttencrypt.svg" /></p>
+<p>派生函数 <code>sub_100AB6AEC</code> 的反编译把这套说得很清楚——SHA512(R) 先算一遍，紧接着把 CONST64 拼上去（两张表逐 16 字节异或、运行时算出），再 SHA512 一遍：</p>
+<pre><code class="language-c">// sub_100AB6AEC：key/iv = SHA512( SHA512(R) || CONST64 )
+v12 = malloc(0x80);
+sub_100AB7164(R, len, &amp;v20);          // v20..v23 = SHA512(R)（前 64 字节）
+*v12 = SHA512(R);                      // 拷到 v12[0..3]
+do {                                   // 后 64 字节 = CONST64，运行时算出：
+    v12[i+4] = veorq_s8( unk_117408288[i], unk_117408248[i] );   // 两表逐 16B 异或
+} while ( ++i &lt; 4 );
+sub_100AB7164(v12, 0x80, out);         // out = SHA512( SHA512(R) || CONST64 )
+// key = out[0:16],  iv = out[16:32]
+</code></pre>
+<p><code>sub_100AB7164</code> 就是标准 SHA-512（IV <code>xmmword_117408550</code> = SHA-512 初始向量）。而两张表里 <code>unk_117408248</code> 正是 <strong>AES 逆 S-box</strong>——<code>CONST64</code> = 逆 S-box 两半异或，纯静态可取：</p>
+<pre><code>CONST64 = 4dd4c2e6b83162090e52b3c7a6733ba4 1cb2462b829ab58a196b39db57177524
+          f49baf7f08e8d68d26a72e37c1a95a2f 1f05a51892aef2949732b62a38aadd58
+</code></pre>
+<p>对应到 Python，干净得多：</p>
+<pre><code class="language-python">def tt_encrypt(P, R=None):
+    R = R or os.urandom(32)
+    d2 = hashlib.sha512(hashlib.sha512(R).digest() + CONST64).digest()
+    key, iv = d2[:16], d2[16:32]
+    inner = hashlib.sha512(P).digest() + P
+    body  = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(inner, 16))
+    return MAGIC + R + body
+</code></pre>
+<blockquote>
+<p>R 内嵌在密文里（不需密钥协商），这套是<strong>完全离线、对称自包含</strong>的：能加密发包，也能直接解开抓到的任意 octet-stream 包体。多组真机向量验证，派生 key/iv 与整体密文跟真机<strong>逐字节一致</strong>。</p>
+</blockquote>
+<h3>2.5 请求与真机验证</h3>
+<p>把 url（明文设备公参 query）+ body（TTEncrypt）+ 头拼起来。第一发探路，用<strong>最小头、不带任何签名</strong>：</p>
+<pre><code class="language-python">headers = {
+    &quot;Content-Type&quot;: &quot;application/octet-stream;tt-data=a&quot;,
+    &quot;User-Agent&quot;:   &quot;&lt;App UA&gt; Cronet&quot;,
+    &quot;x-ss-stub&quot;:    md5(body).hexdigest(),      # body 的 MD5
+    &quot;x-khronos&quot;:    str(int(time.time())),       # 时间戳
+}
+r = requests.post(URL, data=body, headers=headers)
+</code></pre>
+<p>直接 <strong>HTTP 200</strong>，返回完整注册响应：</p>
+<pre><code class="language-json">{&quot;server_time&quot;:1781160581, &quot;device_id&quot;:120218806******24, &quot;install_id&quot;:120218806******20,
+ &quot;device_token&quot;:&quot;AAAXMHR62KT3...&quot;, &quot;dtrait_pk1&quot;:&quot;...&quot;, &quot;new_user&quot;:0, ...}
+</code></pre>
+<blockquote>
+<p>前面那一整套要逆的签名，<strong>对 device_register 根本不需要</strong>——服务端不校验签名头。真正关键的是 body 加密（已完成）+ 正确的字段组合。</p>
+</blockquote>
+<p><strong>注册一台全新设备：</strong> body 里 <code>device_id / old_did / device_token</code> 清空，<code>vendor_id</code>(IDFV)、<code>cdid</code>、<code>mb_time</code> 全部重新生成 → 服务器当新设备处理：</p>
+<pre><code class="language-json">{&quot;device_id&quot;:429841463******51, &quot;install_id&quot;:429841463******47, &quot;new_user&quot;:1, ...}
+</code></pre>
+<p><code>new_user:1</code> —— 凭空注册出一台全新设备。</p>
+<p><strong>device_id 真能用吗？</strong> 拿它 + cookie 调一个需要有效设备的鉴权接口 <code>/im/conversation/main</code>：</p>
+<pre><code>HTTP 200  status_code 0   →  返回真实主会话 conversation_id=384299...
+</code></pre>
+<p>服务器为这个纯协议注册的设备分配了真实会话 → <strong>device_id 有效可用</strong>。</p>
+<h3>2.6 服务端下发配置：动态指纹采集（GF/dtrait）</h3>
+<p>上面那些是写死在 body 里的“静态字段”。风控更深的一层，是<strong>服务端下发配置、客户端按配置动态采集</strong>的设备指纹（字节叫 GF / dtrait）。</p>
+<p>线索在 device_register 的响应里就埋了——返回的 <code>dtrait_pk1 / dtrait_pk2</code> 是两把 <strong>RSA-2048 公钥</strong>，专门用来加密后续上报的 secDtrait。真正的动态采集走另一个接口：</p>
+<pre><code>POST /service/3/device_sdk/stats_collect/?...&amp;fetch_config=true
+</code></pre>
+<p>它是<strong>三层套娃</strong>：<code>TTEncrypt → gzip → base64 → bd_pack</code>（bd_pack 是字节另一套对称编码，也已离线破解：AES-256-CBC，key/iv 同样走 <code>SHA512(SHA512(R)||GF_CONST)</code> 派生）。这个接口的<strong>响应</strong>下发采集配置：</p>
+<pre><code class="language-json">{ &quot;fields&quot;:        [&quot;d_c0&quot;,&quot;d_r1&quot;,&quot;d_m1&quot;,&quot;d_r2&quot;,&quot;d_o0&quot;,&quot;d_o1&quot;],
+  &quot;dtrait_fields&quot;: [&quot;d_c0&quot;,&quot;d_o0&quot;,&quot;d_o1&quot;,&quot;d_m1&quot;,&quot;d_b0&quot;],
+  &quot;version&quot;: 3, &quot;delay_sec&quot;: 10, &quot;dtrait_mem_ttl_sec&quot;: 3600,
+  &quot;configDO0Path&quot;: &quot;/var/mobile/Library/Carrier Bundles/Overlay&quot;, ... }
+</code></pre>
+<p><strong>关键点：要采哪些字段、每个字段对应哪个系统文件路径，都是服务端下发的，不写死。</strong> 客户端 <code>+[BDInstallGFManager startStatusCollectWithFetchConfig:]</code> → <code>generateGFCollectBody</code> → 一堆 <code>collectDxx:path:</code> 按配置去取。frida 跟下来各 <code>d_*</code> 的真身：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>采集内容（真机 frida 实测）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>d_c0</code></td>
+<td><code>/var/mobile/Library/Carrier Bundles</code> 的创建时间</td>
+</tr>
+<tr>
+<td><code>d_o0</code></td>
+<td><code>…/Carrier Bundles/Overlay</code> 的时间</td>
+</tr>
+<tr>
+<td><code>d_o1</code></td>
+<td>另一运营商目录时间（路径服务端下发）</td>
+</tr>
+<tr>
+<td><code>d_m1</code></td>
+<td>SDK 首启时戳</td>
+</tr>
+<tr>
+<td><code>d_b0</code></td>
+<td>系统启动时间</td>
+</tr>
+<tr>
+<td><code>d_r2</code></td>
+<td><strong>App Store 收据</strong>（Apple WWDR 签名的 PKCS#7，内含 bundleid，约 4.8KB DER）</td>
+</tr>
+<tr>
+<td><code>d_r1</code></td>
+<td>空桩（<code>collectDR1</code> 直接返回空——代码即空，非采集失败）</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>这套为什么难伪造：它不是客户端随手能编的字段，而是<strong>一组真实系统文件的时间戳 + Apple 签名的收据</strong>。Carrier Bundles 的时间随设备激活/运营商更新固定、跨重装稳定，是强设备指纹；<code>d_r2</code> 那张收据是 Apple 私钥签的，伪不出来。再加上“采哪些文件”由服务端动态下发，连个固定靶子都不给你。</p>
+</blockquote>
+<p><img alt="GF/dtrait 动态指纹采集：服务端下发配置 + 三层套娃上报" src="images/posts/ios/ai-app-protocol/gf-dtrait.svg" /></p>
+<p>一个容易踩的坑：<strong>下发配置用的 bd_pack 常量和上报的设备数据不是同一个</strong>——配置用 <code>GF_CONST1</code>（派生分支 <code>a7=1</code>），设备数据用 <code>GF_CONST</code>（<code>a7=0</code>）。解码器两个都得试。</p>
+<p>对协议分析的影响：<code>device_register</code> 本身<strong>不依赖</strong>这套（前面已经注册成功了），但若关心“注册的设备能否长期用、会不会被风控盯上”，GF/dtrait 这层动态指纹才是真正的硬骨头——它把“伪造一台设备”从“拼对几十个字段”，升级成了“伪造一组真实文件时间戳 + 一张 Apple 签名收据”。</p>
+<hr />
+<h2>三、请求签名：metasec / X-Gorgon</h2>
+<h3>3.1 签名头有哪些</h3>
+<p>这版 TTNet 是 Rust 写的，发包前调 metasec 加签，一次产出一整套：</p>
+<pre><code>X-Argus / X-Gorgon / X-Helios / X-Khronos / X-Ladon / X-Medusa / X-Neptune / X-SS-STUB
+</code></pre>
+<p><code>X-SS-STUB = MD5(body)</code>、<code>X-Khronos = 时间戳</code> 简单。难的是 <code>X-Gorgon</code>，格式形如 <code>8404 | &lt;2字节 nonce&gt; | 0000 | &lt;20字节摘要&gt;</code>。</p>
+<h3>3.2 静态逆向碰壁（OLLVM）</h3>
+<p>硬件断点（绕过反插桩）抓到活的签名入口 <code>sub_111E08FF8(url, headers)</code>——它一次产出全部 X 头。但往里走就是噩梦：</p>
+<ul>
+<li><strong>控制流平坦化</strong>：核心 <code>sub_111E0A0C4</code> 是标准 OLLVM dispatcher，状态变量 + 魔数常量 + 不透明谓词 + 花指令；</li>
+<li><strong>国密体系</strong>：全镜像扫密码常量，命中 SM3 / SM4 / SHA1 / MD5 / AES 混合，没现成标准库可对；</li>
+<li><strong>真算法靠运行时函数指针到达</strong>，静态 call-graph 解析不出。</li>
+</ul>
+<p>动态路也都堵死：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IDA 远程单步</td>
+<td>太慢；<code>LDAXR/STLXR</code> 原子在单步下活锁（独占监视器每步被清）</td>
+</tr>
+<tr>
+<td>Frida Stalker 跟进</td>
+<td>一进 metasec 就崩（return-地址 gadget，见第七节）</td>
+</tr>
+<tr>
+<td>Frida Interceptor hook</td>
+<td>碰一下就 <code>Process terminated</code>（反篡改，约 25s 杀进程）</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>这套反插桩怎么实现的、metasec 背后还在采哪些设备风险信号，单开一节细拆（见第七节）。这里先记住结论：<strong>动态分析这条路对 metasec 本体是堵死的。</strong></p>
+</blockquote>
+<h3>3.3 思路转变：不逆算法，模拟调用</h3>
+<p>签名函数的 I/O 是确定的：<code>sub_111E08FF8(url, headers) → 全部 X 头</code>。既然<strong>内部算法静态难以推进，就把这个函数原封不动地“跑起来”</strong>——脱离手机、脱离反调试，在可控的模拟器里加载真实二进制直接调。</p>
+<p>用的是<strong>基于 Unicorn 自建的 iOS 模拟执行环境</strong>：Unicorn 跑 arm64 指令，外面补上 ObjC 运行时 / Foundation / 常用 libc。这类「模拟执行真实二进制」的思路，分析字节系的 X-Gorgon/X-Argus 时很常见。</p>
+<hr />
+<h2>四、把签名函数放进受控模拟环境执行</h2>
+<h3>4.1 为什么用模拟执行</h3>
+<ul>
+<li>几百万指令/秒，没有 USB 往返；</li>
+<li><strong>没有反调试、没有 LL/SC 活锁</strong>（单线程模拟，独占监视器是对的）——之前真机单步卡死的那段 Arc 引用计数自增，这里根本不是问题；</li>
+<li>跟单步一样是<strong>动态执行，能穿透 OLLVM 平坦化</strong>（只执行真实那条路径）。</li>
+</ul>
+<h3>4.2 三个关键修复（缺一不可）</h3>
+<p>直接调签名函数是跑不起来的。545MB 主二进制加载只要 13 秒，但要让函数真正跑通，得过三关：</p>
+<p><strong>① 必须全初始化。</strong> 用默认参数加载（跑 <code>init_array</code> + <code>objc_init</code>）。关掉 objc_init，<code>_objc_msgSend</code> 的 GOT 槽是 0，Rust 代码调它直接 <code>br</code> 到 0 崩溃。</p>
+<p><strong>② hook <code>__tlv_bootstrap</code>（TLS 引导）。</strong> 签名器访问 thread-local，经 libdyld 的 <code>__tlv_bootstrap</code>，模拟里跑不通撞 <code>BRK</code>。自己实现：按 descriptor 的 key 分配清零块返回。</p>
+<pre><code class="language-python">def tlv_boot(uc, address, size, ud):
+    desc = emu.get_arg(0)
+    key, off = emu.read_u64(desc + 8), emu.read_u64(desc + 0x10)
+    if key not in arenas:
+        a = emu.create_buffer(0x80000); emu.write_bytes(a, b&quot;\x00&quot; * 0x80000)
+        arenas[key] = a
+    return arenas[key] + off
+emu.add_interceptor(&quot;__tlv_bootstrap&quot;, tlv_boot)
+</code></pre>
+<p><strong>③ patch <code>semwait</code> 返回成功。</strong> 模拟环境默认让信号量等待永远超时（ETIMEDOUT），导致 Rust 的 <code>Once</code> 误判失败 → panic。改成返回 0：</p>
+<pre><code class="language-python">IosSyscallHandler._handle_sys_semwait_signal = lambda self: 0
+</code></pre>
+<p>（另：objc init 会找主程序 <code>Info.plist</code>，从 ipa 抽一份放到二进制旁边即可。）</p>
+<h3>4.3 执行一次，观测产出</h3>
+<p>三关一过，签名函数 2 秒跑完（550 万条指令）。给它一组 <code>(url, headers)</code>，把它写回的那块响应头读出来，就是真实的全套 X 头：</p>
+<pre><code>输入  url + {x-ss-stub, Content-Type, ...}
+输出  X-Gorgon:'8404a094...' / X-Khronos / X-Argus / X-Ladon
+      / X-Helios / X-Medusa / X-Neptune
+</code></pre>
+<p>这一步的价值是<strong>把「黑盒签名头」变成可观测对象</strong>：同一组输入跑出确定结果，就能拿它做后续分析——比如对指令轨迹做密码扫描确认 <code>X-Gorgon</code> 的 20 字节摘要，命中 SM3（主）+ SHA1 + MD5，摘要是分字段打包（query 哈希→字节 0-3，时间/nonce→中段，末字节校验）。</p>
+<blockquote>
+<p>注意这里只是<strong>让签名函数在受控环境里执行、观测它的输入输出</strong>，并没有「读懂」算法——签名内部到底怎么算、能不能闭式还原，是第六节的事（剧透：那是一台字节码 VM）。</p>
+</blockquote>
+<hr />
+<h2>五、对话流程：从拿会话到 AI 回复</h2>
+<h3>5.1 整体流程</h3>
+<p><img alt="对话流程：注册 → 拿会话 → 进会话 → chat → SSE 回复" src="images/posts/ios/ai-app-protocol/chat-flow.svg" /></p>
+<h3>5.2 对话接口结构</h3>
+<pre><code>POST https://api5-normal-hl.&lt;host&gt;/chat/completion?...
+Content-Type: application/json; encoding=utf-8
+</code></pre>
+<p>惊喜：<strong>body 是纯 JSON 明文，不加密！</strong></p>
+<pre><code class="language-json">{ &quot;client_meta&quot;: {&quot;bot_id&quot;:&quot;&lt;默认助手&gt;&quot;, &quot;conversation_id&quot;:&quot;...&quot;, ...},
+  &quot;option&quot;:      {&quot;need_create_conversation&quot;:false, &quot;send_message_scene&quot;:&quot;keyboard&quot;, ...},
+  &quot;messages&quot;:    [{&quot;content_block&quot;:[{&quot;content&quot;:{&quot;text_block&quot;:{&quot;text&quot;:&quot;用户的问题&quot;}}, &quot;block_type&quot;:10000}]}] }
+</code></pre>
+<ul>
+<li>鉴权 = device_register 下发的 cookie（<code>odin_tt</code> / <code>install_id</code> / <code>ttreq</code>，Domain 跨 host 通用，<code>requests.Session</code> 自动带）；</li>
+<li>响应 = <strong>SSE 流式</strong>（<code>event: CHUNK_DELTA / STREAM_CHUNK / SSE_REPLY_END</code>），AI 回复分块流回。</li>
+</ul>
+<h3>5.3 会话从哪来</h3>
+<p>新设备没有会话，body 里 <code>conversation_id</code> 留空报 <code>710020202 invalid param</code>。会话是<strong>设备绑定的 guest 主会话</strong>，App 本地持久化，抓包看不到创建那一刻。</p>
+<p>试了下：全新设备调 <code>/im/conversation/main</code>（body <code>{"ext":{}}</code>）——服务器直接返回一个<strong>真实主会话 id</strong>：</p>
+<pre><code class="language-json">&quot;conversation_info&quot;: {&quot;conversation_id&quot;:&quot;384300...&quot;, &quot;name&quot;:&quot;&lt;App 名&gt;&quot;, &quot;conversation_type&quot;:3, ...}
+</code></pre>
+<p>每个新 device 都分到自己的 guest 主会话。拿到后再 <code>/im/conversation/in_out</code>（cmd 4210）进会话。</p>
+<h3>5.4 卡在 710022002：chat 验签名</h3>
+<p>万事俱备，chat 始终返回：</p>
+<pre><code class="language-json">{&quot;error_code&quot;:710022002, &quot;error_msg&quot;:&quot;当前服务访问频繁，请稍后重试&quot;, &quot;extra&quot;:{&quot;ack&quot;:&quot;1&quot;}}
+</code></pre>
+<p>错误像限流，于是冷却 15 分钟单发——<strong>仍然 710022002</strong>。排除限流后，回头看一个被误判的结论：</p>
+<blockquote>
+<p>早期“chat 不验签名”的测试，是在<strong>无效会话</strong>上做的——会话错误在签名校验<strong>之前</strong>就返回了，从没真正走到验签名那一步。</p>
+</blockquote>
+<p>补上模拟执行产出的 <code>X-Gorgon</code> 等头再发：</p>
+<h3>5.5 端到端验证：整条链跑通一次</h3>
+<p>把前面逆清的每一环串起来，给这一次 chat 请求补上模拟执行产出的签名头，发出去：</p>
+<pre><code>明文 JSON body
+  + X-SS-STUB = MD5(body)
+  + 模拟执行产出的 X-Gorgon / X-Khronos / X-Argus / …
+→ POST chat/completion
+</code></pre>
+<p>SSE 流里终于出现真实文本：</p>
+<pre><code>event: CHUNK_DELTA   data: {&quot;text&quot;:&quot;我是 XX 自研的&quot;}
+event: CHUNK_DELTA   data: {&quot;text&quot;:&quot;AI 助手，乐于为你解答问题…&quot;}
+event: SSE_REPLY_END data: {&quot;end_type&quot;:1, ...}
+</code></pre>
+<blockquote>
+<p><strong>chat 确实验签名（与 device_register 不同）。</strong> 前面对签名函数的模拟执行，到这里正好验证了价值——整条链（采集 → 加密 → 拿会话 → 签名 → 发包 → SSE 回复）端到端跑通，metasec 这一路的分析在这一步闭环。这是对「逆向是否到位」的一次完整验证，而非一个可复用的发号工具。</p>
+</blockquote>
+<hr />
+<h2>六、深入签名算法：签名器其实是一台字节码 VM</h2>
+<p>签名头能在模拟环境里观测、协议也端到端跑通了，但有个问题一直没答案：那 20 字节的 <code>X-Gorgon</code> 摘要、那串更长的 <code>X-Medusa</code>，<strong>里面到底算了什么</strong>？前面只是「观测产物」，没「读懂算法」。这一节就回头把签名器拆开——结果发现它远不止「OLLVM 混淆的 native 函数」那么简单，而是<strong>一台自带字节码的虚拟机</strong>。</p>
+<h3>6.1 不是普通 OLLVM，是 VM</h3>
+<p>签名入口 <code>sub_111E08FF8</code> 往里走，不是常规函数调用链，而是进了一个<strong>解释器</strong>：</p>
+<pre><code>sub_111E08FF8(url, headers)
+   └─ sub_1002D85AC: vm_run(vm_code, &amp;args, ...)
+        └─ sub_1002B3EDC          ← 字节码解释器
+             dispatcher 0x1002B4114 (fetch → decode → br x8)
+             handler 区 0x1002B4000 – 0x1002BDFFF
+</code></pre>
+<p>指令编码也摸清了：每条 32 位字，<code>OP = word[6:11]</code>（6 位），操作数 <code>f0..3 = word[12:17]/[17:22]/[22:27]/[27:32]</code>（各 5 位，都是虚拟寄存器下标，<code>vreg[i] = [x20 + i*8]</code>）。真机 trace 实测只有 26 个真实 opcode 在跑，全是纯算术：<code>XOR / ADD / SUB / AND / OR / NOT / NEG / ROR / SHL / LSR / MUL</code>，外加 <code>LOAD</code>（读输入）和 <code>CALL</code>（调外部，实测只有 memmove/memset）。<strong>没有 SM3/SM4/AES 硬件指令</strong> —— 国密全是这些标量 opcode 软件拼出来的。</p>
+<p>最难缠的是<strong>三层保护</strong>，每一层都是「改代码就崩」的被动自毁，比主动检测更难绕：</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>机制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>① opcode 滚动解密</td>
+<td>每个 handler 执行完，把「下一条」opcode 字 XOR 一个 handler 专属常量、就地写回。静态看全是密文，且<strong>路径相关</strong>（没走到的分支永远是密文）</td>
+</tr>
+<tr>
+<td>② 滚动密钥 <code>var_60</code></td>
+<td>逐指令 <code>EOR #const</code> 更新，参与 handler 地址解码 —— <strong>指令顺序错一条，后面全乱</strong></td>
+</tr>
+<tr>
+<td>③ 自地址完整性</td>
+<td>每个 handler 顶部 <code>ADRL x8, 解释器; ...位运算...; CMP; B.CC</code>，用<strong>函数自身地址的比特</strong>当派发密钥 X5/X6。patch 代码 → 地址派生变 → 派发跳飞</td>
+</tr>
+</tbody>
+</table>
+<p>这也解释了为什么前面 Frida Stalker/Interceptor 一碰就崩：它们要搬代码/打补丁，而 ①③ 让任何代码改动都破坏密钥链。模拟环境原地执行、保留真实寄存器，反而免疫。</p>
+<p>把签名器内部画出来，就是一台带三层护甲的虚拟机：</p>
+<p><img alt="签名器内部：字节码 VM + 三层自毁保护" src="images/posts/ios/ai-app-protocol/signer-vm.svg" /></p>
+<h3>6.2 X-Medusa 拆开：明文 protobuf 提取</h3>
+<p><code>X-Medusa</code> 是这套里最重的头，结构是 <code>base64( [4字节 nonce] + 流密码加密(protobuf) )</code>。每次签名 nonce 都变，所以密文每次不同 —— 这其实是个<strong>逐次 nonce 的流密码</strong>（差分扫描印证：明文⊕密文=keystream，nonce 喂 counter）。</p>
+<p>要看明文 protobuf 得过一关：<strong>明文是「原地加密」的瞬态</strong>，签完内存里那块已经被密文覆盖了，事后 dump 只剩密文。解法是 <strong>「首读值」法</strong> —— 在模拟环境里钩内存<strong>读</strong>，对每个地址只记<strong>第一次被读到的值</strong>（即被覆盖前的明文），配合把时间/熵全部固定让结果确定：</p>
+<pre><code class="language-python">mem = {}
+def on_read(uc, access, addr, size, value, ud):
+    if not (HEAP_LO &lt;= addr &lt; HEAP_HI): return
+    data = uc.mem_read(addr, size)
+    for i, b in enumerate(data):
+        mem.setdefault(addr + i, b)        # 只记首读 = 加密前明文
+emu.uc.hook_add(UC_HOOK_MEM_READ, on_read)
+</code></pre>
+<p>这样就把完整 flat protobuf 提取了出来，任意设备全字段可解：</p>
+<pre><code>field7  &quot;13.6.0&quot;                 # app 版本
+field8  &quot;v04.10.00-ml-iOS&quot;       # 安全 SDK 版本
+field13 &lt;20 字节&gt;                # 设备哈希  ← 本节主角
+field14 &lt;6 字节&gt;                 # 请求摘要
+field15 / field20 / ...
+</code></pre>
+<h3>6.3 一个能闭式还原的字段：field14</h3>
+<p><code>field14</code> 运气好，一层就到底。在 VM 里追 <code>LOAD</code> opcode 读的输入指针，还原出被哈希的明文串（注意 VM 加载时有个半字节交换 <code>[1,0,3,2]</code>，<code>ediv→devi</code>），拼出来正是请求 query：</p>
+<pre><code class="language-python"># 双设备验证通过
+field14 = SM3(&quot;device_id=&lt;did&gt;&amp;iid=&lt;iid&gt;&amp;aid=&lt;aid&gt;&quot;)[:6]
+</code></pre>
+<p>干净的闭式，可移植。这说明签名里<strong>有</strong>能纯算法还原的部分。</p>
+<h3>6.4 难以还原的字段：field13 = 键控 SM3(设备指纹)</h3>
+<p><code>field13</code> 是另一个故事。它 20 字节、随设备变，但<strong>不是</strong> query 的任何哈希 —— sha1/sm3/md5/sha256、各种哈希链、key×query 全试否。它的输入是 VM 内部拼出来的二进制，不落明文。</p>
+<p>于是上<strong>完整 trace + 反向数据流切片</strong>：在模拟环境里全量记录 VM 区每条内存读写（带值），逮住 <code>field13</code> 摘要写出的那一刻，再从输出点反推。落点很明确 —— <code>field13</code> 的首字节在地址 <code>0x1002b64bc</code> 写出，那是 VM 的 <code>XOR</code> opcode（<code>vreg[f2] = vreg[f1] ^ vreg[f0]</code>），正好是 <strong>SM3 的 feed-forward 终结</strong>（<code>V = ABCDEFGH ^ V</code>）。配上 trace 里那张 <code>0x79cc4519</code> 轮常量表 —— <strong>坐实 field13 = SM3 输出</strong>。</p>
+<p>再数压缩块（轮常量读次数 / 64）：<strong>约 9 块 ≈ 512 字节消息</strong>。而 trace 窗口里出现的字符串碎片是关键证据：</p>
+<pre><code>common_key / sign_key          # mssdk 的两把 base64 密钥（license protobuf 里）
+…ers/Bundle/Application/…       # App 沙盒路径
+mssdk / Carrier / App 收据片段
+</code></pre>
+<p>也就是说：</p>
+<pre><code>field13 = SM3( mssdk_key , 设备指纹 blob )[:20]      # 键控 SM3
+</code></pre>
+<p>输入是<strong>整块设备指纹</strong>（就是第 2.6 节那套 GF/dtrait：Carrier Bundles 时间戳、App Store 收据、路径……），不是闭式公式 —— <strong>绑设备，换设备就变</strong>。</p>
+<p>那能不能把这 512 字节消息从 trace 里复原出来？我写了<strong>SM3 感知提取器</strong>，用消息扩展公式反查 W 数组：</p>
+<pre><code>W[j] = P1(W[j-16] ^ W[j-9] ^ ROL(W[j-3],15)) ^ ROL(W[j-13],7) ^ W[j-6]
+P1(x) = x ^ ROL(x,15) ^ ROL(x,23)
+</code></pre>
+<p>思路是：哪个内存 buffer 的值序列满足这个扩展，它的前 16 词就是消息块。四种方法都试了 —— 值导向后向切片、连续地址验扩展、每块 buffer 抽取、指针表解引用 —— <strong>全部证伪</strong>：扩展公式在 flat 内存里怎么都不命中。最后跟到那张「W 数组指针表」，<code>[0]</code> 存的赫然是 OLLVM 不透明谓词常量。</p>
+<p>结论铁证：<strong>W 数组完全 vreg 驻留 + 指针间接 + OLLVM 谓词交织，消息词不存在于任何连续 buffer。</strong> 要字节级还原 <code>field13</code>，只剩 IDA GUI + 微码去混淆（d810）反虚拟化那段 VM SM3 —— headless 驱不动，是另一个量级的工程。</p>
+<p><img alt="field13 反虚拟化：从定位到四法证伪，最终只剩 d810" src="images/posts/ios/ai-app-protocol/field13-devirt.svg" /></p>
+<h3>6.5 这轮深入分析印证了什么</h3>
+<ul>
+<li><strong>签名器是「字节码 VM + 国密软实现 + 设备指纹键控」三件套</strong>，比「OLLVM native 函数」深一层。当初判断「静态性价比极低」是对的，而且低估了。</li>
+<li><strong>同一套签名里，字段难度天差地别</strong>：<code>field14</code> 是 query 的闭式 SM3，一层到底；<code>field13</code> 是设备指纹的键控 SM3，绑设备、藏在 VM 指针间接里，纯算法成本极高。</li>
+<li><strong>最关键的是</strong>：<code>field13</code> 即便复原出来也<strong>不可移植</strong>（它哈希的是真实设备指纹）。这说明对这类「键控 + 绑设备」的签名，纯算法还原的边际价值很低——逆清它的<strong>结构与性质</strong>（是什么、绑什么、为什么不可移植）才是分析的落点，而不是非要求出一份字节级闭式公式。</li>
+</ul>
+<blockquote>
+<p>一句话收口：能闭式的（<code>field14</code>）就闭式，绑设备 + VM 藏起来的（<code>field13</code>）就交给模拟器跑。<strong>知道哪些值得逆、哪些不值得逆，本身就是逆向的一部分。</strong></p>
+</blockquote>
+<hr />
+<h2>七、设备风险检测与反 frida</h2>
+<p>签名只是 metasec 的一半活。另一半是<strong>给这台设备打风险分</strong>——它一边采指纹算签名，一边在背后探「你是不是在调试我、是不是越狱、有没有注入框架」，把结论编进签名里。这一节拆这套防御机制，也补上第三节「动态路全堵死」背后到底是怎么堵的。</p>
+<h3>7.1 它在采什么风险信号</h3>
+<p>用最朴素的办法看 metasec 探什么：hook 它会用到的底层 syscall——文件系统（<code>stat/lstat/access/open/fopen</code>）、进程（<code>ptrace/sysctl</code>）、环境（<code>getenv</code>），命中时打印<strong>调用方地址</strong>（<code>__builtin_return_address(0)</code>，过滤出 metasec 区的调用）。一跑就看清它的探针面：</p>
+<table>
+<thead>
+<tr>
+<th>探测面</th>
+<th>手段</th>
+<th>探什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>调试器</td>
+<td><code>sysctl({CTL_KERN,KERN_PROC,KERN_PROC_PID,pid})</code> 查 <code>p_flag &amp; P_TRACED</code></td>
+<td>是否被 ptrace 附加（debugger / frida-server）</td>
+</tr>
+<tr>
+<td>越狱</td>
+<td><code>stat / access</code> 一串路径</td>
+<td>越狱文件、目录是否存在</td>
+</tr>
+<tr>
+<td>注入</td>
+<td>镜像枚举 / <code>fopen</code></td>
+<td>是否加载了 Substrate / frida 等</td>
+</tr>
+<tr>
+<td>环境</td>
+<td><code>getenv</code></td>
+<td><code>DYLD_INSERT_LIBRARIES</code> 等注入痕迹</td>
+</tr>
+<tr>
+<td>完整性</td>
+<td>自身代码/签名校验</td>
+<td>代码是否被 patch（见第六节三层保护）</td>
+</tr>
+</tbody>
+</table>
+<p>这些结论不单独上报，而是<strong>揉进签名</strong>：<code>X-Medusa</code> 明文 protobuf 里有个 <code>field24</code> 是风险 JSON，形如 <code>{"sts": ...}</code>（status，风险态），init 期就开始采。环境一旦「脏」，这个值就变——服务端拿它做风控。</p>
+<h3>7.2 反 frida / 反 trace：为什么工具一碰就崩</h3>
+<p>第三节那张「动态路全堵死」的表，背后是一套组合拳。除了第六节的三层 VM 自毁保护（改代码就跳飞），还有专门针对插桩工具的：</p>
+<p><strong>① 反调试</strong>：上面 <code>sysctl(KERN_PROC)</code> 查 <code>P_TRACED</code>，frida-server 用 ptrace 附加就中招。</p>
+<p><strong>② 碰一下就杀</strong>：Interceptor hook 签名管理类的方法，甚至只是<strong>枚举一下这个类的方法列表</strong>，App 就 <code>Process terminated</code>——懒守卫，碰类即触发反 frida 检测，约 25s 杀进程。</p>
+<p><strong>③ Stalker 跟进必崩——而且不是「检测到 Stalker」</strong>：这是最有意思的一点。反编译实锤，崩因是 <strong>return-地址 gadget</strong>：</p>
+<pre><code class="language-asm">; 0x100109848（被调 257 次）
+mov  x3, x30        ; 取返回地址
+add  x3, x3, x0     ; 对它做算术
+mov  x30, x3        ; 写回 LR
+ret                 ; 跳到「算出来的」地址
+</code></pre>
+<p>正常执行时 x30 是真实返回地址，加完跳对地方。但 <strong>Stalker 会把代码搬到 scratch 区执行、借用 x30 放自己的蹦床</strong>——gadget 对蹦床地址做算术，结果跳进 scratch 乱区，崩。compute 区有 60+ 个这种 <code>ret</code>、5 个 <code>adr</code> 假 ret。<strong>所以不是「检测到 frida 才崩」，是控制流本身依赖真实 LR，Stalker 一搬就散架。</strong> 硬件断点 / QBDI 原地执行、保留真 x30，反而免疫。</p>
+<p><strong>④ 没有固定 hook 点</strong>：这版 TTNet 是 Rust 直调 metasec native C，<strong>不走 ObjC 方法</strong>——按 selector 过滤 <code>objc_msgSend</code> 0 命中。签名计算又全在 VM 里 <code>br x8</code> 计算派发，没有 <code>bl 某函数</code> 这种固定调用点可下钩。</p>
+<p><img alt="反 frida / 反 trace：三条动态路各自的崩因" src="images/posts/ios/ai-app-protocol/antifrida.svg" /></p>
+<p>唯一安全的姿势：hook <strong>非 metasec 的 ttnet 胶水层</strong>（请求编排、<code>MD5(body)</code> 那些），从边界读 I/O、反推，但碰不到签名内部。</p>
+<h3>7.3 风险态怎么反馈进签名</h3>
+<p>这套检测不是摆设，会<strong>直接改签名输出</strong>。在被插桩的真机上，抓到的 <code>X-Argus</code> 解出来是退化的占位值（base64 的递增 khronos），风险态 <code>sts</code> 也高——metasec 发现环境脏，干脆不给真签名。</p>
+<blockquote>
+<p>这恰好是模拟执行能成的一个隐藏原因：<strong>模拟环境是「干净」的</strong>——没有 ptrace、没有注入库、没有越狱文件、代码没被 patch。风险检测全部通过，metasec 给的是<strong>正常签名</strong>，而不是真机被插桩时那种退化值。换句话说，模拟执行不光绕过了反调试，还顺带骗过了风险画像。</p>
+</blockquote>
+<h3>7.4 对抗这套的思路</h3>
+<ul>
+<li><strong>别 hook metasec 本体</strong>：碰类即死。要 trace 它，只有硬件断点（无痕、不改代码、保留真 LR）或 QBDI / Unicorn（原地执行）。</li>
+<li><strong>想读签名 I/O</strong>：hook 它外面的 ttnet 胶水层（参数进 / 结果出的边界）。</li>
+<li><strong>想要真签名</strong>：要么真机不插桩（但你就 trace 不了），要么用模拟执行——干净环境里原样跑函数，既绕反调试又过风险画像，一举两得。</li>
+</ul>
+<p>把第六、七节连起来看，metasec 的设计哲学就是三道咬合的防御，而它们共享同一个盲点：</p>
+<p><img alt="三道咬合防御 vs 模拟执行的干净环境" src="images/posts/ios/ai-app-protocol/defense.svg" /></p>
+<blockquote>
+<p><strong>签名 = 设备指纹（绑死硬件）× 国密 VM（算法藏起来）× 风险画像（环境脏就退化）</strong>，三者层层咬合，任何一环单独绕不够。但它最大的盲点是「假设自己跑在真实、脏的设备上」——模拟执行给它一台<strong>干净的虚拟设备、原样跑函数</strong>，反调试、反插桩、风险画像同时落空。</p>
+</blockquote>
+<hr />
+<h2>八、安全设计评析</h2>
+<p>把前面拆开的东西换个视角——站在<strong>防御方</strong>看，这套 metasec 哪些设计是真有效、哪些是纸老虎。</p>
+<h3>8.1 设计得好的地方</h3>
+<table>
+<thead>
+<tr>
+<th>设计</th>
+<th>为什么有效</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>纵深咬合</strong></td>
+<td>签名 = 设备指纹 × 国密 VM × 风险画像，三者层层依赖，单点绕过不够</td>
+</tr>
+<tr>
+<td><strong>绑硬件的指纹</strong></td>
+<td>GF/dtrait = 真实系统文件时间戳 + Apple 签名收据，伪不出来；且「采哪些」服务端动态下发，不给固定靶子</td>
+</tr>
+<tr>
+<td><strong>VM + 国密 + 三层自毁</strong></td>
+<td>静态反编译出空壳、动态插桩即自毁，把逆向成本抬到「另一个量级」</td>
+</tr>
+<tr>
+<td><strong>反插桩靠结构而非检测</strong></td>
+<td>return-gadget 依赖真实 LR、自地址派生密钥——绕过某个「检测点」没用，得不破坏整条密钥链。比 <code>if (frida) crash</code> 难绕得多</td>
+</tr>
+<tr>
+<td><strong>风险检测内嵌进签名</strong></td>
+<td>调试器/越狱/注入的检测结论不单独上报，而是编进签名 protobuf 的 <code>field24</code>（<code>{"sts":..}</code>）——<strong>每个签名请求都附一份难伪造的设备风险自评</strong>。服务端不必自己探测：环境脏 → 字段变 + 签名退化，双重信号一起到后端</td>
+</tr>
+<tr>
+<td><strong>键控 + 绑设备字段</strong></td>
+<td><code>field13</code> 即便逆出算法也不可移植（哈希真实设备指纹），跨设备复用无门</td>
+</tr>
+</tbody>
+</table>
+<h3>8.2 被绕过 / 可改进的地方</h3>
+<table>
+<thead>
+<tr>
+<th>弱点</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>核心假设是单点盲区</strong></td>
+<td>所有自毁保护都假设「对手在真实设备上、会改代码 / 搬代码」。模拟执行——干净虚拟设备 + 原地不改码——<strong>一次性绕过反调试、反插桩、风险画像三层</strong>；连带那份内嵌签名的 <code>field24</code> 风险自评，也照常自报「干净」。最强的护甲，挡的是它预设的那种攻击</td>
+</tr>
+<tr>
+<td><strong>风险自评只是客户端自述</strong></td>
+<td><code>field24</code> 是设备<strong>给自己</strong>打的分——签名只保证它没被改，不保证它说的是真话。在干净模拟环境里，它如实报告一个干净环境，于是「难篡改」的风险遥测反而成了「难篡改的假报告」</td>
+</tr>
+<tr>
+<td><strong>TTEncrypt 对称自包含</strong></td>
+<td>密钥派生常量内嵌（逆 S-box 两半异或）、<code>R</code> 内嵌密文、不与服务器协商 → 可完全离线复现 + 解密任意抓包，没有真正的「端密钥」</td>
+</tr>
+<tr>
+<td><strong>校验边界比预期小</strong></td>
+<td><code>device_register</code> 服务端<strong>不验签名</strong>，纯协议即可注册可用设备；签名实际拦截范围远小于它「看起来」覆盖的范围</td>
+</tr>
+<tr>
+<td><strong>端点强度不一致</strong></td>
+<td>同一份 <code>X-Gorgon</code>，chat 拦、注册 / 会话放行 → 弱端点成突破口</td>
+</tr>
+<tr>
+<td><strong>并非字段字段都绑死</strong></td>
+<td><code>field14</code> = query 的闭式 <code>SM3</code>，可纯算法复现；防护强度在字段间并不均匀</td>
+</tr>
+</tbody>
+</table>
+<h3>8.3 给攻防双方的启示</h3>
+<ul>
+<li><strong>分析侧</strong>：先用最小请求探出真实校验边界，往往比预期窄；算法逆不动就模拟执行、观测产物；判断「哪些值得逆」本身是关键。</li>
+<li><strong>防御侧</strong>：最大盲点是「假设对手一定在真实设备、且会动代码」。该补的是<strong>把信任根下沉到服务端</strong>——真正的密钥协商而非内嵌常量、收据 / 证明在<strong>服务端</strong>验签而非仅本地、关键校验扩到所有端点。对模拟执行环境做检测当然也行，但那是又一轮军备竞赛，治标不治本。</li>
+</ul>
+<blockquote>
+<p>一句话：这套防御工程做得很扎实，<strong>强在「绑死硬件 + 抬高逆向成本 + 环境感知」</strong>；但它和绝大多数客户端防护一样，根子上的软肋是——<strong>安全逻辑跑在你不信任的设备上</strong>。一旦对手能在一个「干净、不改代码」的环境里把它原样执行，分层护甲就一起失效。真正的护城河，终究是服务端验证 + 绑服务器的密钥。</p>
+</blockquote>
+<hr />
+<h2>九、总结</h2>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>手段</th>
+<th>结论</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>字段采集</td>
+<td>静态定位采集点</td>
+<td>IDFV+cdid 是稳定标识，决定新老设备；部分字段 base64-key 混淆采集</td>
+</tr>
+<tr>
+<td>body 组合</td>
+<td>BDInstall 序列化</td>
+<td><code>{magic_tag, header{...}}</code> → 紧凑 JSON → gzip</td>
+</tr>
+<tr>
+<td>请求体加密</td>
+<td>静态还原 TTEncrypt</td>
+<td>SHA512×2 派生 + AES-128-CBC，纯 Python 复现、真机逐字节一致</td>
+</tr>
+<tr>
+<td>动态指纹采集</td>
+<td>服务端下发配置</td>
+<td>GF/dtrait：服务器下发“采哪些系统文件时间戳”+ App Store 收据，难伪造；device_register 不依赖</td>
+</tr>
+<tr>
+<td>metasec 签名</td>
+<td><strong>模拟执行 + 观测</strong></td>
+<td>OLLVM 静态难以推进，在受控 Unicorn 环境执行签名函数、观测其产出</td>
+</tr>
+<tr>
+<td>签名算法（深入分析）</td>
+<td>trace + 数据流切片</td>
+<td>签名器是<strong>字节码 VM</strong>（三层自毁保护）；<code>X-Medusa</code> 拆出明文 protobuf；<code>field14</code>=<code>SM3(query)[:6]</code> 闭式，<code>field13</code>=键控 SM3(设备指纹) 绑设备不可移植</td>
+</tr>
+<tr>
+<td>风险检测 / 反插桩</td>
+<td>ReconAF 探针 + 反编译</td>
+<td>探调试器/越狱/注入/环境，结论编进 <code>field24</code> 风险 JSON；反 Stalker 是 return-gadget 依赖真实 LR（非检测）；被插桩则签名退化。模拟执行的干净环境同时绕反调试 + 过风险画像</td>
+</tr>
+<tr>
+<td>device_register</td>
+<td>协议拼装</td>
+<td>服务端<strong>不验签名</strong>，纯 body+stub+khronos 即可注册可用设备</td>
+</tr>
+<tr>
+<td>chat/completion</td>
+<td>协议拼装 + 签名</td>
+<td>body 明文 JSON，但<strong>验签名</strong>，靠模拟执行产出的 X-Gorgon 才放行</td>
+</tr>
+</tbody>
+</table>
+<p>各接口 / 数据的加密、编码与签名一览：</p>
+<table>
+<thead>
+<tr>
+<th>接口 / 数据</th>
+<th>编码·加密</th>
+<th>签名</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>device_register</code> body</td>
+<td>gzip → TTEncrypt(AES-128-CBC)</td>
+<td>不验</td>
+<td>设备信息注册</td>
+</tr>
+<tr>
+<td><code>chat/completion</code> body</td>
+<td>明文 JSON</td>
+<td><strong>验 X-Gorgon</strong></td>
+<td>AI 对话，SSE 流式响应</td>
+</tr>
+<tr>
+<td><code>/im/conversation/*</code></td>
+<td>明文 JSON</td>
+<td>不验</td>
+<td>会话管理（main 拿会话 / in_out 进会话）</td>
+</tr>
+<tr>
+<td><code>stats_collect</code> 上报</td>
+<td>TTEncrypt → gzip → base64 → bd_pack(AES-256)</td>
+<td>不验</td>
+<td>GF/dtrait 指纹上报（三层套娃）</td>
+</tr>
+<tr>
+<td><code>stats_collect</code> 下发配置</td>
+<td>同上（bd_pack <code>a7=1</code> 常量）</td>
+<td>—</td>
+<td>动态采集配置（采哪些文件）</td>
+</tr>
+</tbody>
+</table>
+<p>几点心得：</p>
+<ol>
+<li><strong>逆向不止“读懂算法”一条路。</strong> 当目标被 OLLVM / VMP / 国密堆到静态性价比极低时，“把那段代码放进受控环境原样执行、观测它的输入输出”往往更快。基于 Unicorn 这类 CPU 模拟器自建的执行环境，本质是把 App 的一个函数变成<strong>可观测、可复跑的对象</strong>——用来取样和验证，而不是替你读懂它。</li>
+<li><strong>先发一个最小请求探路，再决定逆什么。</strong> 没先用最小头试 device_register，我会一直以为必须先还原 X-Gorgon——结果它并不需要。服务器真实校验的范围，往往比你以为的小。</li>
+<li><strong>同一套签名，不同端点校验强度不同。</strong> device_register 放行、chat 拦截，是同一份 <code>X-Gorgon</code> 在不同后端的不同待遇。别用一个接口的结论套另一个。</li>
+<li><strong>采集这块最容易被忽视但最关键。</strong> 协议跑通后“能不能持续用、会不会被风控”，很大程度取决于设备字段采得真不真、组合得对不对。</li>
+<li><strong>知道哪些值得逆，本身就是逆向的一部分。</strong> 回头深入签名（第六节）才看清：它是字节码 VM + 国密 + 设备指纹键控。能闭式的字段（<code>field14 = SM3(query)[:6]</code>）就闭式还原；绑设备、藏在 VM 指针间接里的字段（<code>field13</code> = 键控 SM3(设备指纹)）即便复原出来也不可移植——对这类签名，逆清结构与性质比求一份字节级公式更有价值。判断「不值得纯算法逆」和真把它逆出来，同样重要。</li>
+<li><strong>模拟执行顺带绕过了风险画像。</strong> metasec 不只算签名，还探调试器/越狱/注入/完整性，环境不干净就让签名退化（第七节）。模拟执行给它一台<strong>干净虚拟设备、原样跑函数</strong>——反调试、反插桩、风险检测三道防御同时落空。逆向防御机制时，先想清楚它「假设自己跑在什么环境里」，往往就找到了那个盲点。</li>
+</ol>
+<p>最终成果：从设备注册到 AI 对话，整条协议链逐层拆清，并以一次端到端跑通验证到位；签名头通过模拟执行观测取样。再回头拆开签名算法，逆出了能闭式的字段、证明了绑设备字段不可移植——<strong>协议链分析与签名算法逆向，两头都落到了实处</strong>。</p>
+<blockquote>
+<p>本文仅用于安全研究与协议分析学习，相关标识已脱敏。
+<img alt="" src="![](![]())" /></p>
+</blockquote></body></html>

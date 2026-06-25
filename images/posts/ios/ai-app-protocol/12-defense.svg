@@ -1,0 +1,33 @@
+<svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="ar3" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#16a34a"/></marker>
+    <style>
+      .pil{fill:#fee2e2;stroke:#ef4444;stroke-width:1.5}
+      .asm{fill:#fef9c3;stroke:#ca8a04;stroke-width:1.6}
+      .win{fill:#dcfce7;stroke:#16a34a;stroke-width:1.8}
+      .h{font-size:14px;font-weight:700;fill:#b91c1c;text-anchor:middle}
+      .t{font-size:12px;fill:#475569;text-anchor:middle}
+      .link{stroke:#9ca3af;stroke-width:1.4;fill:none}
+      .win-edge{stroke:#16a34a;stroke-width:2;fill:none;marker-end:url(#ar3)}
+      .title{font-size:13px;font-weight:700;fill:#7f1d1d;text-anchor:middle}
+      .wt{font-size:14px;font-weight:700;fill:#166534;text-anchor:middle}
+      .el{font-size:12px;font-weight:700;fill:#15803d}
+    </style>
+  </defs>
+
+  <text class="title" x="360" y="20">metasec 三道咬合防御</text>
+  <g><rect class="pil" x="20" y="34" width="206" height="66" rx="9"/><text class="h" x="123" y="62">设备指纹</text><text class="t" x="123" y="84">绑死硬件</text></g>
+  <g><rect class="pil" x="257" y="34" width="206" height="66" rx="9"/><text class="h" x="360" y="62">国密字节码 VM</text><text class="t" x="360" y="84">算法藏起来</text></g>
+  <g><rect class="pil" x="494" y="34" width="206" height="66" rx="9"/><text class="h" x="597" y="62">风险画像</text><text class="t" x="597" y="84">调试·越狱·注入→退化</text></g>
+
+  <path class="link" d="M123,100 L300,148"/>
+  <path class="link" d="M360,100 L360,148"/>
+  <path class="link" d="M597,100 L420,148"/>
+
+  <g><rect class="asm" x="150" y="150" width="420" height="48" rx="24"/><text x="360" y="173" font-size="13" font-weight="700" fill="#854d0e" text-anchor="middle">共同假设</text><text class="t" x="360" y="190" fill="#854d0e">跑在「真实 + 脏」的设备上</text></g>
+
+  <path class="win-edge" d="M360,198 L360,244"/>
+  <text class="el" x="372" y="226">模拟执行：干净虚拟设备、原样跑函数</text>
+
+  <g><rect class="win" x="190" y="246" width="340" height="56" rx="10"/><text class="wt" x="360" y="270">三道防御同时落空</text><text class="t" x="360" y="290" fill="#166534">拿到正常签名（非退化值）</text></g>
+</svg>
