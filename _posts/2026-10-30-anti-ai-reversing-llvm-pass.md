@@ -1,6 +1,9 @@
 ---
 title: 反 AI 逆向方法论：从智能逆向原理到 LLVM Pass 落地
 categories: Android
+class: anti-ai-article
+css: [posts/anti-ai-reading.css]
+allow_zoom: true
 tags: [Android, Native, LLVM, O-MVLL, AI逆向, MCP, REA, 代码保护, 虚拟化]
 keywords: 反AI逆向, Android SO保护, MCP, REA, LLVM Pass, 控制流混淆, 表达式切片, 代码虚拟化, 运行时防护
 description: MCP 与 REA 让模型能够持续调用反编译、脚本和仿真工具，核心代码的分析与功能克隆更容易形成自动化闭环。本文从这条攻击链出发，讨论预算干扰、证据欺骗、运行时守卫和业务语义混淆，给出 Android Native 的 LLVM Pass 实现，并用独立盲测说明收益、代价与失守边界。
@@ -30,6 +33,8 @@ MCP 接口和 REA 等工具进入工作流后，这些操作开始被智能代�
 
 [REA](https://github.com/morluto/rea)将二进制、应用和运行行为分析组织成可供代理使用的工具入口。反编译、函数查询、字符串和引用分析可以成为代理的一步操作，而不是需要人工复制粘贴的一段上下文。
 
+手机阅读时，代码块和宽表格可左右滑动；架构图可点击打开 SVG 原图，再用浏览器缩放查看。实测部分另提供逐例对照卡片。
+
 当工具入口与脚本环境结合，工作流就从“一问一答”变成了循环：
 
 ```text
@@ -42,7 +47,7 @@ MCP 接口和 REA 等工具进入工作流后，这些操作开始被智能代�
                             提交解释或独立实现
 ```
 
-![智能逆向代理的工具与验证闭环](/images/posts/android/anti-ai-llvm/01-agent-workflow.svg)
+[![智能逆向代理的工具与验证闭环](/images/posts/android/anti-ai-llvm/01-agent-workflow.svg)](/images/posts/android/anti-ai-llvm/01-agent-workflow.svg){: .anti-ai-figure}
 
 *图 1：模型负责选择和组合操作，分析引擎提供证据，脚本与执行环境用来验证假设。*
 
@@ -244,7 +249,7 @@ LLVM IR 保留了算术、比较、分支、调用与数据依赖，适合在生
 
 前面三层可以与后面两种业务表示方案分别组合，实验中保持这些外围层相同。下文的“切片分层保护”指 flatten、表达式切片、元数据、影子和守卫的组合；“整函数虚拟化保护”将其中的表达式切片替换为编码 VM。它们是机制名称，不代表某个商业保护产品的全部能力。
 
-![分层保护与真实业务执行路径](/images/posts/android/anti-ai-llvm/02-layered-protection.svg)
+[![分层保护与真实业务执行路径](/images/posts/android/anti-ai-llvm/02-layered-protection.svg)](/images/posts/android/anti-ai-llvm/02-layered-protection.svg){: .anti-ai-figure}
 
 *图 2：外围证据与影子路径提供干扰，真实业务本身还需要数据流或整函数表示变换。*
 
@@ -305,7 +310,7 @@ uint32_t quote_demo(uint32_t user, uint32_t quantity,
 
 E1 生成认证关系，E2 决定是否进入真实报价，E3 计算原价，E4 计算折扣并返回。四个位置也标在图 3 中：外围观察控制能否进入真实函数，切片与整函数 VM 则是两种替代的业务表示。
 
-![公开报价函数的贯穿转换示例](/images/posts/android/anti-ai-llvm/09-quote-walkthrough.svg)
+[![公开报价函数的贯穿转换示例](/images/posts/android/anti-ai-llvm/09-quote-walkthrough.svg)](/images/posts/android/anti-ai-llvm/09-quote-walkthrough.svg){: .anti-ai-figure}
 
 *图 3：同一段 E1—E4 业务经过 C、LLVM IR 和两种保护表示；最终都应保持公开示例的输入输出。*
 
@@ -366,7 +371,7 @@ if (!ok) return 0; // E2；通过后仍进入 E3/E4 的报价块
 
 原 `%ok` 是 i1；调用边界使用 i32，返回解码后必须截回 i1，再供原 `br` 使用。同理，E3 的乘法和 E4 的结果边界可以形成其他切片，但跨块的返回 PHI 不会被搬进这个 helper。
 
-![表达式切片的依赖收集与替换流程](/images/posts/android/anti-ai-llvm/07-expression-slice.svg)
+[![表达式切片的依赖收集与替换流程](/images/posts/android/anti-ai-llvm/07-expression-slice.svg)](/images/posts/android/anti-ai-llvm/07-expression-slice.svg){: .anti-ai-figure}
 
 *图 4：A 收集依赖，B 建立编码边界并克隆原运算，C 替换原使用点；旁边的真实业务分支继续使用恢复后的结果。*
 
@@ -451,7 +456,7 @@ B.CreateCondBr(Hit, Synthetic, Original);
 
 切片保留了小而纯的业务接口。整函数方案尝试移除这个接口：将输入校验、认证、价格与折扣全部降低成同一套虚拟程序，保持外部 ABI，删除原计算体，再生成解释器。
 
-![整函数编码虚拟化的构建与执行架构](/images/posts/android/anti-ai-llvm/03-business-vm.svg)
+[![整函数编码虚拟化的构建与执行架构](/images/posts/android/anti-ai-llvm/03-business-vm.svg)](/images/posts/android/anti-ai-llvm/03-business-vm.svg){: .anti-ai-figure}
 
 *图 5：上半部分为构建期的 `validate → compile → materialize`，下半部分为生成函数的执行循环；字段和操作数的明文在分派块中出现。*
 
@@ -508,7 +513,7 @@ for (auto [P, temp] : copies)
 emit(JMP, 0, 0, 0, 0, 0, 32, labels[to]);
 ```
 
-![SSA 与 PHI 降低到编码解释器的流程](/images/posts/android/anti-ai-llvm/08-vm-lowering.svg)
+[![SSA 与 PHI 降低到编码解释器的流程](/images/posts/android/anti-ai-llvm/08-vm-lowering.svg)](/images/posts/android/anti-ai-llvm/08-vm-lowering.svg){: .anti-ai-figure}
 
 *图 6：A 保留源语义，B 建立编码程序，C 生成执行循环。PHI 临时寄存器也纳入后续编号随机化。*
 
@@ -676,7 +681,7 @@ OMVLL_CONFIG="$FLATTEN_CONFIG" clang -O2 \
 
 本实验将模型客户端放在外层 OS 沙箱，用私有通信通道连接固定目标 broker；脚本在另一套受限工作进程中执行。REA 后端每轮独立，候选 C 在单独的沙箱编译与运行，保存 oracle 的裁判不加载候选代码。先用合成控制文件验证真实访问结果，再启动盲测。
 
-![隔离盲测与独立裁判架构](/images/posts/android/anti-ai-llvm/04-evaluation-isolation.svg)
+[![隔离盲测与独立裁判架构](/images/posts/android/anti-ai-llvm/04-evaluation-isolation.svg)](/images/posts/android/anti-ai-llvm/04-evaluation-isolation.svg){: .anti-ai-figure}
 
 *图 7：候选程序与答案分离，脚本无源码／裁判访问，隐藏评分不反馈代理。*
 
@@ -716,9 +721,13 @@ OMVLL_CONFIG="$FLATTEN_CONFIG" clang -O2 \
 ### 5.5 保护前后对照：恢复结果与分析成本
 {: #section-5-5}
 
-下表将同一秘密、同一轨道的未保护产物与整函数虚拟化产物对齐。六行来自同一个函数族，不能理解成六个不同 App。图中的灰蓝色数值对应未保护、蓝色数值对应保护后，橙色标出违规观测；下面的文本表用箭头表示配对。违规行不计算有效 token 倍数。
+下表将同一秘密、同一轨道的未保护产物与整函数虚拟化产物对齐。六行来自同一个函数族，不能理解成六个不同 App。桌面端总览图中，灰蓝色对应未保护、蓝色对应保护后，橙色标出违规观测，文本表用箭头表示配对；手机端按实例展示左右对照卡片。违规行不计算有效 token 倍数。
 
-![Android SO 保护前后实测表](/images/posts/android/anti-ai-llvm/05-before-after-benchmark.svg)
+{% include anti-ai-benchmark-mobile.html %}
+
+<div class="benchmark-desktop" markdown="1">
+
+[![Android SO 保护前后实测表](/images/posts/android/anti-ai-llvm/05-before-after-benchmark.svg)](/images/posts/android/anti-ai-llvm/05-before-after-benchmark.svg){: .anti-ai-figure}
 
 *图 8：行为重建得分与原始二进制等价校验分开统计，所有数值来自实际运行记录。*
 
@@ -730,6 +739,8 @@ OMVLL_CONFIG="$FLATTEN_CONFIG" clang -O2 \
 | 1 / 动态 | 8,592 → 8,592 | 53.6 → 443.2 | 55,126 → 2,737,362 | 49.7× |
 | 2 / 静态 | 8,592 → 8,592 | 39.8 → 487.2 | 74,594 → 2,234,561 | 30.0× |
 | 2 / 动态 | 8,592 → 5,697 | 30.1 → 330.2 | 54,247 → 681,749 | 12.6× |
+
+</div>
 
 `*` 为静态轨实际运行目标 VM 的无效观测，不计恢复率或配对倍率。原始未保护／保护 SO 在正常夹具下各通过 8,592/8,592 项等价检查；这与 AI 重建的正确数是不同指标。
 
@@ -795,7 +806,7 @@ Token 使用 CLI 报告的累计 `input_tokens + output_tokens`，缓存输入�
 
 调用 57 进行了 1,000 组合法／非法输入自检，调用 58 提交 1,026 字节独立纯算术 C。最终会话约 550.4 秒，58 次调用；隔离裁判判定 8,592/8,592，其中合法业务 2,784/2,784、非法输入 5,808/5,808。重建不加载原 SO，也没有复制原 VM。
 
-![从实际分派状态到独立业务实现](/images/posts/android/anti-ai-llvm/06-decoder-observation.svg)
+[![从实际分派状态到独立业务实现](/images/posts/android/anti-ai-llvm/06-decoder-observation.svg)](/images/posts/android/anti-ai-llvm/06-decoder-observation.svg){: .anti-ai-figure}
 
 *图 9：本例按正常执行顺序收集明文状态，再归纳业务关系；调用编号可与保存轨迹对应。*
 
@@ -821,7 +832,7 @@ decoded_field = words[PC*9+k]
 
 某个 PC 的字段只依赖 seed、PC 和字段序号。寄存器帧的 session 与调用输入有关，但它并没有把程序字段绑定到“之前必须合法执行过哪些指令”。代理能够复用目标的解码逻辑，便不必先独立求出全部掩码。
 
-![主动选择虚拟 PC 的完整恢复路线](/images/posts/android/anti-ai-llvm/10-chosen-pc-recovery.svg)
+[![主动选择虚拟 PC 的完整恢复路线](/images/posts/android/anti-ai-llvm/10-chosen-pc-recovery.svg)](/images/posts/android/anti-ai-llvm/10-chosen-pc-recovery.svg){: .anti-ai-figure}
 
 *图 10：选择 PC、恢复外层状态、借目标解码，再独立实现；这是动态轨允许的目标仿真行为。*
 

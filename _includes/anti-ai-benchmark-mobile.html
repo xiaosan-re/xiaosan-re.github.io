@@ -1,0 +1,22 @@
+<div class="benchmark-mobile" aria-label="保护前后逐例数据">
+  <p><strong>手机端逐例对照</strong>：左列未保护，右列整函数虚拟化；以下数据与总览图一致。</p>
+  <p><a href="{{ "/images/posts/android/anti-ai-llvm/05-before-after-benchmark.svg" | relative_url }}">查看完整总览图（可缩放）</a></p>
+  {% for row in site.data.anti_ai_benchmark.rows %}
+  {% assign before = row.before %}{% assign after = row.after %}
+  {% assign before_tokens = before.usage.input_tokens | plus: before.usage.output_tokens %}
+  {% assign after_tokens = after.usage.input_tokens | plus: after.usage.output_tokens %}
+  <section class="benchmark-case{% unless after.eligible %} benchmark-invalid{% endunless %}">
+    <p class="benchmark-case-title">实例 {{ row.instance }} · {% if row.track == 'S_static' %}静态轨{% else %}动态轨{% endif %}</p>
+    <div class="benchmark-columns" aria-hidden="true"><span>指标</span><span>未保护</span><span>保护后</span></div>
+    <dl class="benchmark-rows">
+      <div class="benchmark-row"><dt>重建正确数</dt><dd class="benchmark-before" aria-label="未保护">{{ before.correct }}/{{ before.total }}</dd><dd class="benchmark-after" aria-label="保护后">{{ after.correct }}/{{ after.total }}{% unless after.eligible %}*{% endunless %}</dd></div>
+      <div class="benchmark-row"><dt>会话秒数</dt><dd class="benchmark-before" aria-label="未保护">{{ before.elapsed_seconds | round: 1 }}</dd><dd class="benchmark-after" aria-label="保护后">{{ after.elapsed_seconds | round: 1 }}</dd></div>
+      <div class="benchmark-row"><dt>工具调用</dt><dd class="benchmark-before" aria-label="未保护">{{ before.tool_calls }}</dd><dd class="benchmark-after" aria-label="保护后">{{ after.tool_calls }}</dd></div>
+      <div class="benchmark-row"><dt>累计 token</dt><dd class="benchmark-before" aria-label="未保护">{{ before_tokens }}</dd><dd class="benchmark-after" aria-label="保护后">{{ after_tokens }}</dd></div>
+      <div class="benchmark-row"><dt>未缓存输入</dt><dd class="benchmark-before" aria-label="未保护">{{ before.usage.input_tokens | minus: before.usage.cached_input_tokens }}</dd><dd class="benchmark-after" aria-label="保护后">{{ after.usage.input_tokens | minus: after.usage.cached_input_tokens }}</dd></div>
+      <div class="benchmark-row"><dt>SO 等价</dt><dd class="benchmark-before" aria-label="未保护">{{ before.runtime_equivalence.correct }}/{{ before.runtime_equivalence.total }}</dd><dd class="benchmark-after" aria-label="保护后">{{ after.runtime_equivalence.correct }}/{{ after.runtime_equivalence.total }}</dd></div>
+    </dl>
+    <p class="benchmark-case-note">累计 token 倍率：{% if after.eligible %}<strong>{{ after_tokens | times: 1.0 | divided_by: before_tokens | round: 1 }}×</strong>{% else %}<strong>N/A</strong>。* 静态轨实际执行目标 VM，原始观测保留，不计有效恢复率或配对倍率{% endif %}。</p>
+  </section>
+  {% endfor %}
+</div>
