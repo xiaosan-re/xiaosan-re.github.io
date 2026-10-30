@@ -1,0 +1,285 @@
+{
+  "title": "Android SO：保护前后实测对照",
+  "model": "gpt-5.6-sol · high",
+  "before_label": "未保护",
+  "after_label": "虚拟化保护",
+  "source": "同秘密、同轨道配对；18 次方案对照 + 6 次未保护基线；2026-10-30",
+  "rows": [
+    {
+      "instance": 0,
+      "track": "S_static",
+      "before": {
+        "trial_id": "34ec6d3176cc4c07",
+        "correct": 8592,
+        "total": 8592,
+        "elapsed_seconds": 44.98233829200035,
+        "tool_calls": 4,
+        "usage": {
+          "input_tokens": 52999,
+          "cached_input_tokens": 40320,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1725,
+          "reasoning_output_tokens": 1003
+        },
+        "runtime_equivalence": {
+          "correct": 8592,
+          "total": 8592
+        },
+        "eligible": true,
+        "invalid_reason": "",
+        "outcome": "VERIFIED_RECOVERY"
+      },
+      "after": {
+        "trial_id": "dffa45c5660aa227",
+        "correct": 6057,
+        "total": 8592,
+        "elapsed_seconds": 496.7499370419828,
+        "tool_calls": 48,
+        "usage": {
+          "input_tokens": 2513332,
+          "cached_input_tokens": 2401792,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 32172,
+          "reasoning_output_tokens": 17901
+        },
+        "runtime_equivalence": {
+          "correct": 8592,
+          "total": 8592
+        },
+        "eligible": false,
+        "invalid_reason": "静态轨实际执行目标 VM 程序，排除比较",
+        "outcome": "CONTAMINATED"
+      }
+    },
+    {
+      "instance": 0,
+      "track": "D_dynamic",
+      "before": {
+        "trial_id": "70c9b9dc98775ec2",
+        "correct": 8592,
+        "total": 8592,
+        "elapsed_seconds": 67.24974116700469,
+        "tool_calls": 8,
+        "usage": {
+          "input_tokens": 120732,
+          "cached_input_tokens": 108160,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3218,
+          "reasoning_output_tokens": 920
+        },
+        "runtime_equivalence": {
+          "correct": 8592,
+          "total": 8592
+        },
+        "eligible": true,
+        "invalid_reason": "",
+        "outcome": "VERIFIED_RECOVERY"
+      },
+      "after": {
+        "trial_id": "f9d0696a64d0db5c",
+        "correct": 8592,
+        "total": 8592,
+        "elapsed_seconds": 550.4473012909875,
+        "tool_calls": 58,
+        "usage": {
+          "input_tokens": 5281944,
+          "cached_input_tokens": 5118976,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 27410,
+          "reasoning_output_tokens": 11877
+        },
+        "runtime_equivalence": {
+          "correct": 8592,
+          "total": 8592
+        },
+        "eligible": true,
+        "invalid_reason": "",
+        "outcome": "VERIFIED_RECOVERY"
+      }
+    },
+    {
+      "instance": 1,
+      "track": "S_static",
+      "before": {
+        "trial_id": "68d02c81a7d65983",
+        "correct": 8592,
+        "total": 8592,
+        "elapsed_seconds": 36.081048458989244,
+        "tool_calls": 4,
+        "usage": {
+          "input_tokens": 52860,
+          "cached_input_tokens": 35968,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1484,
+          "reasoning_output_tokens": 797
+        },
+        "runtime_equivalence": {
+          "correct": 8592,
+          "total": 8592
+        },
+        "eligible": true,
+        "invalid_reason": "",
+        "outcome": "VERIFIED_RECOVERY"
+      },
+      "after": {
+        "trial_id": "595383454349b321",
+        "correct": 8592,
+        "total": 8592,
+        "elapsed_seconds": 678.8936557919951,
+        "tool_calls": 57,
+        "usage": {
+          "input_tokens": 4413848,
+          "cached_input_tokens": 4268544,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 50224,
+          "reasoning_output_tokens": 19916
+        },
+        "runtime_equivalence": {
+          "correct": 8592,
+          "total": 8592
+        },
+        "eligible": true,
+        "invalid_reason": "",
+        "outcome": "VERIFIED_RECOVERY"
+      }
+    },
+    {
+      "instance": 1,
+      "track": "D_dynamic",
+      "before": {
+        "trial_id": "7f93b9f3cfc2fe82",
+        "correct": 8592,
+        "total": 8592,
+        "elapsed_seconds": 53.59830199999851,
+        "tool_calls": 4,
+        "usage": {
+          "input_tokens": 53122,
+          "cached_input_tokens": 41728,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2004,
+          "reasoning_output_tokens": 1303
+        },
+        "runtime_equivalence": {
+          "correct": 8592,
+          "total": 8592
+        },
+        "eligible": true,
+        "invalid_reason": "",
+        "outcome": "VERIFIED_RECOVERY"
+      },
+      "after": {
+        "trial_id": "8674d65e676be161",
+        "correct": 8592,
+        "total": 8592,
+        "elapsed_seconds": 443.203093041986,
+        "tool_calls": 40,
+        "usage": {
+          "input_tokens": 2712135,
+          "cached_input_tokens": 2569472,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 25227,
+          "reasoning_output_tokens": 9884
+        },
+        "runtime_equivalence": {
+          "correct": 8592,
+          "total": 8592
+        },
+        "eligible": true,
+        "invalid_reason": "",
+        "outcome": "VERIFIED_RECOVERY"
+      }
+    },
+    {
+      "instance": 2,
+      "track": "S_static",
+      "before": {
+        "trial_id": "d2da649c50a202ba",
+        "correct": 8592,
+        "total": 8592,
+        "elapsed_seconds": 39.76116570801241,
+        "tool_calls": 5,
+        "usage": {
+          "input_tokens": 72543,
+          "cached_input_tokens": 59008,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2051,
+          "reasoning_output_tokens": 1296
+        },
+        "runtime_equivalence": {
+          "correct": 8592,
+          "total": 8592
+        },
+        "eligible": true,
+        "invalid_reason": "",
+        "outcome": "VERIFIED_RECOVERY"
+      },
+      "after": {
+        "trial_id": "4460daf851bb5d05",
+        "correct": 8592,
+        "total": 8592,
+        "elapsed_seconds": 487.197847250005,
+        "tool_calls": 33,
+        "usage": {
+          "input_tokens": 2201094,
+          "cached_input_tokens": 2083968,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 33467,
+          "reasoning_output_tokens": 19513
+        },
+        "runtime_equivalence": {
+          "correct": 8592,
+          "total": 8592
+        },
+        "eligible": true,
+        "invalid_reason": "",
+        "outcome": "VERIFIED_RECOVERY"
+      }
+    },
+    {
+      "instance": 2,
+      "track": "D_dynamic",
+      "before": {
+        "trial_id": "68c7c2d520d448e8",
+        "correct": 8592,
+        "total": 8592,
+        "elapsed_seconds": 30.114392749994295,
+        "tool_calls": 4,
+        "usage": {
+          "input_tokens": 52777,
+          "cached_input_tokens": 41472,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1470,
+          "reasoning_output_tokens": 892
+        },
+        "runtime_equivalence": {
+          "correct": 8592,
+          "total": 8592
+        },
+        "eligible": true,
+        "invalid_reason": "",
+        "outcome": "VERIFIED_RECOVERY"
+      },
+      "after": {
+        "trial_id": "20a77cacf48a0bd8",
+        "correct": 5697,
+        "total": 8592,
+        "elapsed_seconds": 330.17099312497885,
+        "tool_calls": 25,
+        "usage": {
+          "input_tokens": 669419,
+          "cached_input_tokens": 624768,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 12330,
+          "reasoning_output_tokens": 4135
+        },
+        "runtime_equivalence": {
+          "correct": 8592,
+          "total": 8592
+        },
+        "eligible": true,
+        "invalid_reason": "",
+        "outcome": "WRONG_CONFIDENT"
+      }
+    }
+  ]
+}

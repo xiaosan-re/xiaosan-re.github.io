@@ -1,0 +1,567 @@
+{
+  "scope": "Secondary posthoc observation, not a replacement for the8592-case primary judge. Correct behavioral output alone does not imply explicit key extraction. Only submitted C and agent-written derived scripts count; raw-binary numeric coincidences and private reasoning excluded. Absence is unknown; no unobserved extraction is claimed false.",
+  "primary_score_unchanged": true,
+  "trials": {
+    "f9d0696a64d0db5c": {
+      "variant": "v4_hardened",
+      "track": "D_dynamic",
+      "instance": 0,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/f9d0696a64d0db5c/submission.c",
+          "line": 5
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/f9d0696a64d0db5c/submission.c",
+          "line": 16
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "304ab4cf3d74fa28": {
+      "variant": "v3_hardened",
+      "track": "S_static",
+      "instance": 2,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/304ab4cf3d74fa28/submission.c",
+          "line": 5
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/304ab4cf3d74fa28/submission.c",
+          "line": 13
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "6e0c5f05a70c2acc": {
+      "variant": "omvll_flatten",
+      "track": "S_static",
+      "instance": 1,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/6e0c5f05a70c2acc/submission.c",
+          "line": 18
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/6e0c5f05a70c2acc/submission.c",
+          "line": 17
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "2ebd3b621012fad6": {
+      "variant": "omvll_flatten",
+      "track": "S_static",
+      "instance": 0,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/2ebd3b621012fad6/submission.c",
+          "line": 27
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/2ebd3b621012fad6/submission.c",
+          "line": 15
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "1214ed16b131f49a": {
+      "variant": "v3_hardened",
+      "track": "D_dynamic",
+      "instance": 1,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/1214ed16b131f49a/submission.c",
+          "line": 5
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/1214ed16b131f49a/submission.c",
+          "line": 13
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "6639306491ba950a": {
+      "variant": "omvll_flatten",
+      "track": "S_static",
+      "instance": 2,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/6639306491ba950a/submission.c",
+          "line": 5
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/6639306491ba950a/submission.c",
+          "line": 16
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "6081534c9c8d4cdc": {
+      "variant": "v3_hardened",
+      "track": "D_dynamic",
+      "instance": 0,
+      "eligible": true,
+      "key_recovered": "unknown",
+      "salt_recovered": "unknown",
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "no_unambiguous_literal_and_role_observed",
+          "confidence": "unknown"
+        },
+        {
+          "material": "salt",
+          "kind": "no_unambiguous_literal_and_role_observed",
+          "confidence": "unknown"
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "6fcc093dc556c8f3": {
+      "variant": "omvll_flatten",
+      "track": "D_dynamic",
+      "instance": 0,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/6fcc093dc556c8f3/submission.c",
+          "line": 25
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/6fcc093dc556c8f3/submission.c",
+          "line": 39
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "00ca25fa5a59b59f": {
+      "variant": "v3_hardened",
+      "track": "S_static",
+      "instance": 0,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/00ca25fa5a59b59f/submission.c",
+          "line": 16
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/00ca25fa5a59b59f/submission.c",
+          "line": 5
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "dffa45c5660aa227": {
+      "variant": "v4_hardened",
+      "track": "S_static",
+      "instance": 0,
+      "eligible": false,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/dffa45c5660aa227/submission.c",
+          "line": 30
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/dffa45c5660aa227/submission.c",
+          "line": 45
+        }
+      ],
+      "note": "OUT OF TRACK: observation only, excluded from eligible primary material counts; see independent static/independence audit."
+    },
+    "20a77cacf48a0bd8": {
+      "variant": "v4_hardened",
+      "track": "D_dynamic",
+      "instance": 2,
+      "eligible": true,
+      "key_recovered": "unknown",
+      "salt_recovered": "unknown",
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "no_unambiguous_literal_and_role_observed",
+          "confidence": "unknown"
+        },
+        {
+          "material": "salt",
+          "kind": "no_unambiguous_literal_and_role_observed",
+          "confidence": "unknown"
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "8674d65e676be161": {
+      "variant": "v4_hardened",
+      "track": "D_dynamic",
+      "instance": 1,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/8674d65e676be161/submission.c",
+          "line": 21
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/8674d65e676be161/submission.c",
+          "line": 34
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "24d47de3be51d1d2": {
+      "variant": "v3_hardened",
+      "track": "S_static",
+      "instance": 1,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/24d47de3be51d1d2/submission.c",
+          "line": 21
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/24d47de3be51d1d2/submission.c",
+          "line": 34
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "ef9f8042222f544f": {
+      "variant": "omvll_flatten",
+      "track": "D_dynamic",
+      "instance": 2,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/ef9f8042222f544f/submission.c",
+          "line": 17
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/ef9f8042222f544f/submission.c",
+          "line": 25
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "595383454349b321": {
+      "variant": "v4_hardened",
+      "track": "S_static",
+      "instance": 1,
+      "eligible": true,
+      "key_recovered": "unknown",
+      "salt_recovered": "unknown",
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "no_unambiguous_literal_and_role_observed",
+          "confidence": "unknown"
+        },
+        {
+          "material": "salt",
+          "kind": "no_unambiguous_literal_and_role_observed",
+          "confidence": "unknown"
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "3816aaa9f3efd017": {
+      "variant": "v3_hardened",
+      "track": "D_dynamic",
+      "instance": 2,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/3816aaa9f3efd017/submission.c",
+          "line": 5
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/3816aaa9f3efd017/submission.c",
+          "line": 13
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "7b3ae0977d2e18a3": {
+      "variant": "omvll_flatten",
+      "track": "D_dynamic",
+      "instance": 1,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/7b3ae0977d2e18a3/submission.c",
+          "line": 23
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_c_oracle_matching_literal",
+          "confidence": "high",
+          "file": "trials/7b3ae0977d2e18a3/submission.c",
+          "line": 31
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    },
+    "4460daf851bb5d05": {
+      "variant": "v4_hardened",
+      "track": "S_static",
+      "instance": 2,
+      "eligible": true,
+      "key_recovered": true,
+      "salt_recovered": true,
+      "evidence_locations": [
+        {
+          "material": "key",
+          "kind": "submitted_decrypted_vm_constant_plus_static_def_use",
+          "confidence": "high",
+          "vm_rows": [
+            3,
+            50,
+            59
+          ],
+          "file": "trials/4460daf851bb5d05/submission.c",
+          "line": 19
+        },
+        {
+          "material": "salt",
+          "kind": "submitted_decrypted_vm_constant_plus_static_def_use",
+          "confidence": "high",
+          "vm_rows": [
+            16,
+            25,
+            35
+          ],
+          "file": "trials/4460daf851bb5d05/submission.c",
+          "line": 32
+        }
+      ],
+      "note": "Posthoc matching secret literal with authentication/coupon role in submitted C or agent-written derived scripts. Secret values and hidden inputs omitted. Unknown is not evidence of secrecy."
+    }
+  },
+  "aggregates_by_variant": {
+    "v4_hardened": {
+      "attempted_n": 6,
+      "eligible_n": 5,
+      "key_counts": {
+        "true": 3,
+        "false": 0,
+        "unknown": 2
+      },
+      "salt_counts": {
+        "true": 3,
+        "false": 0,
+        "unknown": 2
+      },
+      "ineligible_n": 1,
+      "ineligible_key_counts": {
+        "true": 1,
+        "false": 0,
+        "unknown": 0
+      },
+      "ineligible_salt_counts": {
+        "true": 1,
+        "false": 0,
+        "unknown": 0
+      },
+      "observed_key_instances": [
+        0,
+        1,
+        2
+      ],
+      "observed_salt_instances": [
+        0,
+        1,
+        2
+      ],
+      "observed_key_instance_n": 3,
+      "observed_salt_instance_n": 3
+    },
+    "v3_hardened": {
+      "attempted_n": 6,
+      "eligible_n": 6,
+      "key_counts": {
+        "true": 5,
+        "false": 0,
+        "unknown": 1
+      },
+      "salt_counts": {
+        "true": 5,
+        "false": 0,
+        "unknown": 1
+      },
+      "ineligible_n": 0,
+      "ineligible_key_counts": {
+        "true": 0,
+        "false": 0,
+        "unknown": 0
+      },
+      "ineligible_salt_counts": {
+        "true": 0,
+        "false": 0,
+        "unknown": 0
+      },
+      "observed_key_instances": [
+        0,
+        1,
+        2
+      ],
+      "observed_salt_instances": [
+        0,
+        1,
+        2
+      ],
+      "observed_key_instance_n": 3,
+      "observed_salt_instance_n": 3
+    },
+    "omvll_flatten": {
+      "attempted_n": 6,
+      "eligible_n": 6,
+      "key_counts": {
+        "true": 6,
+        "false": 0,
+        "unknown": 0
+      },
+      "salt_counts": {
+        "true": 6,
+        "false": 0,
+        "unknown": 0
+      },
+      "ineligible_n": 0,
+      "ineligible_key_counts": {
+        "true": 0,
+        "false": 0,
+        "unknown": 0
+      },
+      "ineligible_salt_counts": {
+        "true": 0,
+        "false": 0,
+        "unknown": 0
+      },
+      "observed_key_instances": [
+        0,
+        1,
+        2
+      ],
+      "observed_salt_instances": [
+        0,
+        1,
+        2
+      ],
+      "observed_key_instance_n": 3,
+      "observed_salt_instance_n": 3
+    }
+  }
+}

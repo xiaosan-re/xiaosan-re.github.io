@@ -1,0 +1,19 @@
+{
+  "scope": "public teaching example only; native macOS arm64, no Android or attack-strength claim",
+  "compiler": "LLVM 21",
+  "pass": "BusinessVM.cpp",
+  "seed": "0x2468ace1",
+  "cases": 2090,
+  "matched": 2090,
+  "random": 2000,
+  "boundary": 90,
+  "worked_example": {
+    "input": [
+      7,
+      12,
+      2,
+      324508511
+    ],
+    "return": 1188
+  }
+}
